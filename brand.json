@@ -1,0 +1,24 @@
+{
+  "name": "barragan",
+  "colors": {
+    "background": "#F4EFE6",
+    "text": "#2A2520",
+    "accent": "#2C4A6B",
+    "accent2": "#A04A2C",
+    "categories": [
+      "#2C4A6B",
+      "#A04A2C",
+      "#B8956A",
+      "#C0857B"
+    ]
+  },
+  "fonts": {
+    "reading": [
+      "Source Serif 4",
+      "Cardo"
+    ],
+    "mono": "JetBrains Mono"
+  },
+  "radius": 2,
+  "logoText": "Julie Davila"
+}

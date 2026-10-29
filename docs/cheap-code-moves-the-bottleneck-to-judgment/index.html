@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="en" class="no-js" data-palette="barragan" data-palette-locked>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cheap code moves the bottleneck to judgment · Julie Davila · Research</title>
+<style>
+/* ==========================================================================
+   House style: base stylesheet (v1.2)
+   Inline this whole file into a <style> tag in every generated page.
+   No external fonts, no CDNs, no frameworks. Everything is a token.
+
+   Switch palette:  <html data-palette="paper|slate|graphite">
+   Force a theme:   <html data-theme="light|dark">  (default follows the OS)
+   Switch density:  <body class="doc">  long reading (default)
+                    <body class="tool"> dashboards, trackers, dense UIs
+   No-JS fallback:  <html class="no-js">; the page script removes the class.
+   Page pattern:    <body data-pattern="decide|understand|look-up|monitor|do|review">
+                    (the reader's job; see PATTERNS.md and section 16)
+   ========================================================================== */
+
+/* ---------- 1. Tokens: raw palettes (never used directly by components) --- */
+
+:root,
+:root[data-palette="paper"] {
+  /* Warm editorial. Paper ground, ink text, deep blue accent, clay second. */
+  --p-bg: #F7F4EE;      --p-surface: #FFFDF9;  --p-sunken: #EFEBE3;
+  --p-fg: #23201C;      --p-fg2: #57514A;      --p-fg3: #6E675E;
+  --p-accent: #2D5283;  --p-accent2: #9A4A2E;
+  --p-border: #8C857A;  --p-hairline: #DDD6CA;
+  --p-tint: #E6ECF4;    --p-tint2: #F4E6DF;
+}
+:root[data-palette="slate"] {
+  /* Cool neutral. Safest choice for a corporate audience. */
+  --p-bg: #F5F6F8;      --p-surface: #FFFFFF;  --p-sunken: #ECEEF2;
+  --p-fg: #1B1F24;      --p-fg2: #4B535D;      --p-fg3: #636C77;
+  --p-accent: #2756C7;  --p-accent2: #9A4A1C;
+  --p-border: #868D96;  --p-hairline: #DADDE3;
+  --p-tint: #E7EDFA;    --p-tint2: #F5E9E0;
+}
+:root[data-palette="graphite"] {
+  /* Near-monochrome. One teal accent. Most austere. */
+  --p-bg: #FAFAF9;      --p-surface: #FFFFFF;  --p-sunken: #F1F1EF;
+  --p-fg: #161616;      --p-fg2: #4A4A48;      --p-fg3: #666663;
+  --p-accent: #0F6E6E;  --p-accent2: #8A3B12;
+  --p-border: #8A8A86;  --p-hairline: #E0E0DC;
+  --p-tint: #E3F0F0;    --p-tint2: #F5E8E0;
+}
+
+/* Status colours are shared by every palette. All pass 5:1 on the grounds.
+   Category colours (--p-cat-1..6) are for series, zones and actor types only.
+   Checked with a script (WCAG contrast, Machado 2009 colour-vision simulation):
+   light: 3.88 to 9.54 on bg and surface; min pairwise dE76 23.2 normal, 20.3 protan, 12.9 deutan, 12.3 tritan.
+   dark:  4.03 to 10.59 on bg and surface; min pairwise dE76 23.1 normal, 17.7 protan, 16.2 deutan, 13.5 tritan.
+   Always label or legend them anyway. */
+:root {
+  --p-danger: #A8281F;  --p-warn: #8A5300;  --p-ok: #2C6B3A;
+  --p-danger-bg: #F8E5E2; --p-warn-bg: #F6ECDA; --p-ok-bg: #E3F0E5;
+  --p-cat-1: #2F7FC1; --p-cat-2: #8C7A0B; --p-cat-3: #C24D7A;   /* sky, olive, rose */
+  --p-cat-4: #4E4AA8; --p-cat-5: #2F8A57; --p-cat-6: #7E2340;   /* indigo, green, wine */
+  --p-scroll-shadow: rgb(0 0 0 / 0.14);
+}
+
+/* Dark theme: one neutral dark ground, palette keeps its accent family.
+   Every dark rule sits under @media screen so print always uses light values. */
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --p-bg: #17161A; --p-surface: #1F1E23; --p-sunken: #141317;
+    --p-fg: #ECE7DF; --p-fg2: #BDB6AB; --p-fg3: #9C958A;
+    --p-border: #6F6A63; --p-hairline: #34323A;
+    --p-accent: #8FB0E3; --p-accent2: #E09A7C;
+    --p-tint: #24303F; --p-tint2: #3A2A24;
+    --p-danger: #FF8A80; --p-warn: #F0B44C; --p-ok: #7CCB8F;
+    --p-danger-bg: #3A1E1C; --p-warn-bg: #362A14; --p-ok-bg: #1C3022;
+    --p-cat-1: #86D0F5; --p-cat-2: #C9B23C; --p-cat-3: #F29CBC;
+    --p-cat-4: #8778DC; --p-cat-5: #5DBE88; --p-cat-6: #C25C7C;
+    --p-scroll-shadow: rgb(255 255 255 / 0.12);
+  }
+  :root[data-palette="slate"]:not([data-theme="light"])    { --p-accent: #86A8FF; --p-accent2: #E3A57A; }
+  :root[data-palette="graphite"]:not([data-theme="light"]) { --p-accent: #5FC4C4; --p-accent2: #E8A27C; --p-tint: #1D3233; }
+}
+@media screen {
+  :root[data-theme="dark"] {
+    --p-bg: #17161A; --p-surface: #1F1E23; --p-sunken: #141317;
+    --p-fg: #ECE7DF; --p-fg2: #BDB6AB; --p-fg3: #9C958A;
+    --p-border: #6F6A63; --p-hairline: #34323A;
+    --p-accent: #8FB0E3; --p-accent2: #E09A7C;
+    --p-tint: #24303F; --p-tint2: #3A2A24;
+    --p-danger: #FF8A80; --p-warn: #F0B44C; --p-ok: #7CCB8F;
+    --p-danger-bg: #3A1E1C; --p-warn-bg: #362A14; --p-ok-bg: #1C3022;
+    --p-cat-1: #86D0F5; --p-cat-2: #C9B23C; --p-cat-3: #F29CBC;
+    --p-cat-4: #8778DC; --p-cat-5: #5DBE88; --p-cat-6: #C25C7C;
+    --p-scroll-shadow: rgb(255 255 255 / 0.12);
+  }
+  :root[data-theme="dark"][data-palette="slate"]    { --p-accent: #86A8FF; --p-accent2: #E3A57A; }
+  :root[data-theme="dark"][data-palette="graphite"] { --p-accent: #5FC4C4; --p-accent2: #E8A27C; --p-tint: #1D3233; }
+}
+
+/* ---------- 2. Tokens: functional roles (what components use) ------------ */
+
+:root {
+  --bg: var(--p-bg);            --surface: var(--p-surface);   --sunken: var(--p-sunken);
+  --fg: var(--p-fg);            --fg-muted: var(--p-fg2);      --fg-subtle: var(--p-fg3);
+  --accent: var(--p-accent);    --accent-2: var(--p-accent2);
+  --accent-bg: var(--p-tint);   --accent-2-bg: var(--p-tint2);
+  --border: var(--p-border);    --hairline: var(--p-hairline);
+  --danger: var(--p-danger);    --danger-bg: var(--p-danger-bg);
+  --warn: var(--p-warn);        --warn-bg: var(--p-warn-bg);
+  --ok: var(--p-ok);            --ok-bg: var(--p-ok-bg);
+  --cat-1: var(--p-cat-1); --cat-2: var(--p-cat-2); --cat-3: var(--p-cat-3);
+  --cat-4: var(--p-cat-4); --cat-5: var(--p-cat-5); --cat-6: var(--p-cat-6);
+  --scroll-shadow: var(--p-scroll-shadow);
+
+  /* Type. Local fonts only. Good matches on macOS and Windows; on Linux and
+     ChromeOS the stacks fall back to the system serif, sans and mono. */
+  --font-read: "Iowan Old Style", "Charter", "Bitstream Charter", "Source Serif 4", "Source Serif Pro", "Sitka Text", Cambria, Georgia, serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: Menlo, "Cascadia Code", Consolas, "DejaVu Sans Mono", "Liberation Mono", ui-monospace, monospace;
+
+  /* Scale. Reading sizes step by 1.2 from an 18px base; UI sizes are 14 and 12.
+     Pixel values assume the browser default 16px root. Use only these tokens. */
+  --fs-xs: 0.75rem;    /* 12px: kickers, block labels, sources */
+  --fs-sm: 0.875rem;   /* 14px: interface text, captions, tables, code */
+  --fs-base: 1.125rem; /* 18px: reading text, h4 */
+  --fs-md: 1.35rem;    /* 21.6px: h3, dek */
+  --fs-lg: 1.62rem;    /* 25.9px: h2 */
+  --fs-xl: 1.944rem;   /* 31.1px: stat values, h1 on phones */
+  --fs-2xl: 2.333rem;  /* 37.3px: h1 */
+  --fs-3xl: 2.8rem;    /* 44.8px: display only */
+  --lh-read: 1.62;  --lh-ui: 1.45;     --lh-tight: 1.2;
+  --measure: 64ch;  /* about 70 to 75 characters of running text */
+
+  /* Space: 4px grid. */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px; --s9: 96px;
+
+  --radius: 6px;    --radius-sm: 4px;   --radius-pill: 999px;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 2px 8px rgb(0 0 0 / 0.04);
+  --ease: cubic-bezier(.2,.7,.2,1);
+  --gutter: 16px;
+}
+
+/* ---------- 3. Base ----------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; color-scheme: light dark; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-read); font-size: var(--fs-base); line-height: var(--lh-read);
+  font-optical-sizing: auto; text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased; overflow-wrap: break-word;
+}
+body.tool { font-family: var(--font-ui); font-size: var(--fs-sm); line-height: var(--lh-ui); }
+
+h1, h2, h3, h4 { font-family: var(--font-display); color: var(--fg); line-height: var(--lh-tight); font-weight: 600; text-wrap: balance; margin: 0; }
+body.tool h1, body.tool h2, body.tool h3, body.tool h4 { font-family: var(--font-ui); letter-spacing: -0.01em; }
+h1 { font-size: var(--fs-2xl); letter-spacing: -0.015em; }
+h2 { font-size: var(--fs-lg); margin-top: var(--s8); }
+h3 { font-size: var(--fs-md); margin-top: var(--s6); }
+h4 { font-size: var(--fs-base); margin-top: var(--s5); font-family: var(--font-ui); font-weight: 600; }
+h2 + *, h3 + *, h4 + * { margin-top: var(--s3); }
+/* Phones: body 17px; h4 (18) and h3 (21.6) stay above it. */
+@media (max-width: 520px) { body.doc, body:not(.tool) { font-size: 17px; } h1 { font-size: var(--fs-xl); } h2 { margin-top: var(--s7); } }
+body.tool h1 { font-size: var(--fs-xl); } body.tool h2 { font-size: var(--fs-md); margin-top: var(--s7); }
+body.tool h3 { font-size: var(--fs-base); } body.tool h4 { font-size: var(--fs-sm); }
+
+p, ul, ol, dl, blockquote, figure, table, pre, details, .callout, .tabs, form, fieldset { margin: var(--s4) 0 0; }
+.stats, .cards, .compare, .grid, .table-wrap, ol.steps, ol.timeline { margin-top: var(--s5); }
+p { text-wrap: pretty; }
+li + li { margin-top: var(--s2); }
+ul, ol { padding-left: 1.3em; }
+strong { font-weight: 650; }
+small, .small { font-size: var(--fs-sm); }
+.muted { color: var(--fg-muted); }
+.num, td.num, .tabular { font-variant-numeric: tabular-nums lining-nums; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+a:hover { text-decoration-color: currentColor; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+code, kbd, samp { font-family: var(--font-mono); font-size: 0.9em; }
+:not(pre) > code { background: var(--sunken); padding: 0.1em 0.35em; border-radius: var(--radius-sm); overflow-wrap: anywhere; }
+pre { background: var(--sunken); padding: var(--s4); border-radius: var(--radius); overflow-x: auto; font-size: var(--fs-sm); line-height: 1.5; }
+pre code { font-size: inherit; }
+/* A code block with a file-name caption. */
+figure.code > figcaption { margin-top: var(--s2); }
+/* Optional hand-written highlighting: wrap tokens in these spans. */
+.tok-k { color: var(--accent); } .tok-s { color: var(--ok); } .tok-c { color: var(--fg-subtle); font-style: italic; }
+
+hr { border: 0; border-top: 1px solid var(--hairline); margin: var(--s7) 0; }
+/* The one ornament: four whole dots. Use at most three times per page. */
+hr.mark { border: 0; height: 12px; margin: var(--s8) auto; width: 64px;
+  background: radial-gradient(circle, var(--accent-2) 2.5px, transparent 3px) 0 50% / 16px 12px repeat-x; }
+
+blockquote { margin-left: 0; padding-left: var(--s4); border-left: 3px solid var(--border); color: var(--fg-muted); font-style: italic; }
+blockquote footer { font-style: normal; font-family: var(--font-ui); font-size: var(--fs-sm); margin-top: var(--s2); }
+
+/* ---------- 4. Layout --------------------------------------------------- */
+
+.page { max-width: 1180px; margin: 0 auto; padding: var(--s7) var(--gutter) var(--s9); }
+@media (min-width: 720px) { :root { --gutter: 32px; } }
+body.tool .page { max-width: 1440px; padding-top: var(--s5); }
+
+/* Reading column: prose holds the measure, wide things may break out. */
+.prose > * { max-width: var(--measure); }
+.prose > .wide, .prose > figure, .prose > .table-wrap, .prose > .grid, .prose > .cards, .prose > .stats, .prose > .compare, .prose > .tabs { max-width: none; }
+.grid > *, .cards > *, .compare > *, .stats > *, .with-toc > * { min-width: 0; }
+
+.bluf > * { max-width: var(--measure); }
+
+/* Contents rail. The list is written into the HTML; script only marks the
+   current section. Markup order is .bluf, nav.toc, .prose, so on a phone the
+   bottom line comes first and the rail is a collapsible box under it. On wide
+   screens the rail sits in its own column beside both. */
+.with-toc { display: block; }
+@media (min-width: 1100px) {
+  .with-toc { display: grid; grid-template-columns: 220px minmax(0, 1fr); column-gap: var(--s8); }
+  .with-toc > .toc { grid-column: 1; grid-row: 1 / span 2; }
+  .with-toc > .bluf { grid-column: 2; grid-row: 1; }
+  /* .prose, and anything a page wrongly puts beside it, stays out of the rail column. */
+  .with-toc > :not(.toc):not(.bluf) { grid-column: 2; }
+}
+.toc { font-family: var(--font-ui); font-size: var(--fs-sm); line-height: 1.4; }
+.toc details { border: 0; background: none; margin: 0; }
+.toc summary, .toc .toc-title { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-subtle); padding: 0; }
+.toc details[open] > summary { border-bottom: 0; margin-bottom: var(--s3); }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li + li { margin-top: var(--s2); }
+.toc li.annex-start { margin-top: var(--s4); padding-top: var(--s3); border-top: 1px solid var(--hairline); }
+.toc a { color: var(--fg-muted); text-decoration: none; display: block; padding-left: var(--s3); border-left: 2px solid transparent; }
+.toc a:hover { color: var(--fg); }
+.toc a[aria-current] { color: var(--accent); border-left-color: var(--accent); }
+@media (min-width: 1100px) {
+  .toc { position: sticky; top: var(--s6); align-self: start; max-height: calc(100vh - 64px); overflow-y: auto; }
+  .toc summary { pointer-events: none; }
+}
+@media (max-width: 1099.98px) {
+  .toc { border: 1px solid var(--hairline); border-radius: var(--radius); padding: var(--s3) var(--s4); margin-top: var(--s5); margin-bottom: 0; background: var(--surface); }
+  .toc summary { padding: var(--s1) 0; }
+}
+
+.grid { display: grid; gap: var(--s5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+
+/* ---------- 5. Page header and answer-first block ------------------------ */
+
+.masthead { padding-bottom: var(--s5); border-bottom: 1px solid var(--hairline); margin-bottom: var(--s6); }
+.masthead .toolbar { justify-content: flex-end; margin-bottom: var(--s4); }
+.kicker { font-family: var(--font-ui); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2); }
+.masthead h1 { margin-top: var(--s2); max-width: 32ch; }
+.dek { font-size: var(--fs-md); color: var(--fg-muted); margin-top: var(--s3); max-width: 58ch; line-height: 1.45; }
+.meta { font-family: var(--font-ui); font-size: var(--fs-sm); color: var(--fg-subtle); margin-top: var(--s4); display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); }
+.meta > * { min-width: 0; overflow-wrap: anywhere; }
+/* Reference, tool and log pages open with one sentence of purpose instead of .bluf. */
+.purpose { font-size: var(--fs-md); line-height: 1.45; max-width: var(--measure); }
+
+/* The bottom line, up front. One per page that argues or reports a finding.
+   Dashboards: one computed status sentence in .bluf, no list. */
+.bluf { background: var(--surface); border: 1px solid var(--hairline); border-left: 4px solid var(--accent); border-radius: var(--radius); padding: var(--s5); margin-top: var(--s6); }
+.bluf > .label { font-family: var(--font-ui); font-size: var(--fs-xs); font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.bluf p:first-of-type { margin-top: var(--s2); font-size: var(--fs-md); line-height: 1.5; }
+.bluf ul { margin-top: var(--s3); }
+/* Phones: a tighter masthead so the bottom line starts on the first screen. */
+@media (max-width: 520px) { .page { padding-top: var(--s5); } .dek, .bluf p:first-of-type, .purpose { font-size: var(--fs-base); } .bluf { padding: var(--s4); } }
+
+/* ---------- 6. Callouts ------------------------------------------------- */
+
+.callout { border-radius: var(--radius); padding: var(--s4) var(--s5); background: var(--accent-bg); }
+.callout > :first-child { margin-top: 0; }
+.callout .label { font-family: var(--font-ui); font-weight: 650; font-size: var(--fs-sm); display: block; margin-bottom: var(--s1); }
+.callout.decision { background: var(--accent-2-bg); }
+.callout.risk     { background: var(--warn-bg); }
+.callout.stop     { background: var(--danger-bg); box-shadow: inset 4px 0 0 var(--danger); }
+
+/* ---------- 7. Status: always an icon shape and a word ------------------- */
+
+.status { display: inline-flex; align-items: center; gap: 0.4em; font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: 600; padding: 0.1em 0.55em; border-radius: var(--radius-pill); white-space: nowrap; }
+.status::before { content: ""; width: 0.6em; height: 0.6em; background: currentColor; flex: none; }
+.status.ok     { color: var(--ok); background: var(--ok-bg); }     .status.ok::before     { border-radius: 50%; }
+.status.warn   { color: var(--warn); background: var(--warn-bg); } .status.warn::before   { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.status.danger { color: var(--danger); background: var(--danger-bg); } .status.danger::before { border-radius: 1px; }
+.status.idle   { color: var(--fg-muted); background: var(--sunken); } .status.idle::before { border-radius: 50%; background: transparent; border: 1.5px solid currentColor; }
+
+/* ---------- 8. Stats, cards, steps, timeline, comparison ----------------- */
+
+.stats { display: grid; gap: var(--s4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); }
+@media (max-width: 520px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stat .value { font-size: var(--fs-lg); } }
+.stat { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: var(--s4); }
+.stat .value { font-family: var(--font-ui); font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; overflow-wrap: anywhere; }
+.stat .what { font-family: var(--font-ui); font-size: var(--fs-sm); color: var(--fg-muted); margin-top: var(--s1); }
+.stat .src { font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--fg-subtle); margin-top: var(--s2); }
+
+/* Cards only when the grouping is real. Never let two cards touch. */
+.cards { display: grid; gap: var(--s5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: var(--s5); box-shadow: var(--shadow); }
+.card > :first-child { margin-top: 0; }
+.card h3, .card h4 { margin-top: 0; }
+a.card { display: block; color: inherit; text-decoration: none; transition: border-color .15s var(--ease); }
+a.card:hover { border-color: var(--accent); }
+
+/* Sequential framing: numbered steps with a spine. */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li { position: relative; padding-left: 3rem; padding-bottom: var(--s5); counter-increment: step; }
+ol.steps > li + li { margin-top: 0; }
+ol.steps > li::before { content: counter(step); position: absolute; left: 0; top: 0.05em; width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: 650; color: var(--accent); background: var(--accent-bg); }
+ol.steps > li::after { content: ""; position: absolute; left: calc(1rem - 1px); top: 2.3rem; bottom: 0.2rem; width: 2px; background: var(--hairline); }
+ol.steps > li:last-child::after { display: none; }
+ol.steps > li > strong:first-child { display: block; }
+
+/* Dated events: a date column and the event. Use a table for overlapping work. */
+ol.timeline { list-style: none; padding: 0; border-left: 2px solid var(--hairline); margin-left: var(--s2); }
+ol.timeline > li { position: relative; padding-left: var(--s5); }
+ol.timeline > li + li { margin-top: var(--s4); }
+ol.timeline > li::before { content: ""; position: absolute; left: -7px; top: 0.45em; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); }
+ol.timeline > li.now::before { background: var(--accent); border-color: var(--accent); }
+ol.timeline time { display: block; font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: 600; color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+
+/* Side-by-side options. Stacks on narrow screens. */
+.compare { display: grid; gap: var(--s5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.compare > .option { border-top: 3px solid var(--hairline); padding-top: var(--s4); }
+.compare > .option.recommended { border-top-color: var(--accent); }
+.compare .option > :is(h3, h4):first-child { margin-top: 0; font: 600 var(--fs-base)/1.3 var(--font-ui); }
+
+/* ---------- 9. Tables: always inside .table-wrap ------------------------- */
+
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--hairline); border-radius: var(--radius); background: var(--surface); }
+/* Long tables (about 15+ rows): the wrapper scrolls and the header sticks. */
+.table-wrap.scroll-y { max-height: min(70vh, 640px); overflow: auto; }
+table { border-collapse: collapse; width: 100%; font-family: var(--font-ui); font-size: var(--fs-sm); line-height: 1.45; margin: 0; }
+th, td { text-align: left; vertical-align: top; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--hairline); }
+thead th { font-weight: 650; color: var(--fg-muted); background: var(--sunken); position: sticky; top: 0; z-index: 1; }
+th[scope="row"] { font-weight: 650; color: var(--fg); }
+/* The recommended column: accent rule on the header, light tint below. */
+thead th.rec { color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
+td.rec { background: var(--accent-bg); background: color-mix(in srgb, var(--accent-bg) 55%, transparent); }
+tbody tr:last-child > * { border-bottom: 0; }
+tbody tr:hover > * { background: color-mix(in srgb, var(--accent-bg) 45%, transparent); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+/* Keep captions to a short title. The source line goes in .table-note after
+   the wrapper, so it never scrolls off a phone screen. */
+caption { caption-side: top; text-align: left; padding: var(--s3) var(--s4) 0; font-weight: 600; color: var(--fg); }
+.table-note { font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--fg-subtle); margin-top: var(--s2); max-width: var(--measure); }
+body.tool th, body.tool td { padding: 6px var(--s3); }
+
+/* ---------- 10. Figures and diagrams ------------------------------------ */
+
+figure { margin-left: 0; margin-right: 0; }
+/* The Enlarge button sits above the frame, right-aligned, so it never covers
+   the figure and never scrolls away with it. */
+figure > .zoom-btn { display: block; margin: 0 0 var(--s2) auto; }
+.figure-frame { position: relative; background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: var(--s4); overflow-x: auto; }
+.figure-frame img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+/* Figures draw at 1:1 or larger, never smaller. Set style="--fig-min: Wpx" on
+   every figure SVG, W = viewBox width. Below that width the frame scrolls.
+   Above it the SVG may grow to 1.25x and no further. */
+.figure-frame > svg { display: block; width: 100%; height: auto; margin: 0 auto; min-width: var(--fig-min, 0px); max-width: calc(var(--fig-min, 800px) * 1.25); }
+/* Small charts (viewBox up to about 400 wide) keep exactly their own size. */
+.figure-frame > svg.small-ok { max-width: var(--fig-min, 400px); }
+/* Scroll cue: a soft shadow appears at whichever edge has more content. */
+.figure-frame, .table-wrap {
+  background:
+    linear-gradient(to right, var(--surface) 30%, transparent) left / 24px 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 30%, transparent) right / 24px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--scroll-shadow), transparent) left / 10px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--scroll-shadow), transparent) right / 10px 100% no-repeat scroll,
+    var(--surface);
+}
+figcaption { font-family: var(--font-ui); font-size: var(--fs-sm); color: var(--fg-muted); margin-top: var(--s3); max-width: var(--measure); }
+figcaption strong { color: var(--fg); }
+.fig-id { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--fg-subtle); }
+/* "Illustrative" mark: in HTML (caption) use this class; inside an SVG use text.d-mark. */
+.mark-illustrative { font-family: var(--font-ui); font-size: var(--fs-xs); font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-subtle); }
+.zoom-btn { font: 600 var(--fs-xs)/1 var(--font-ui); color: var(--fg-muted); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 10px; cursor: zoom-in; }
+.zoom-btn:hover { color: var(--accent); border-color: var(--accent); }
+dialog.zoom { width: 96vw; height: 92vh; max-width: none; max-height: none; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--fg); overflow: hidden; }
+dialog.zoom::backdrop { background: rgb(0 0 0 / 0.55); }
+dialog.zoom .zoom-bar { display: flex; gap: var(--s2); align-items: center; height: 44px; padding: 0 var(--s3); border-bottom: 1px solid var(--hairline); font: 500 var(--fs-sm) var(--font-ui); }
+dialog.zoom .zoom-bar .spacer { flex: 1; }
+dialog.zoom .zoom-bar button { font: inherit; padding: 4px 10px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); border-radius: var(--radius-sm); cursor: pointer; }
+dialog.zoom .zoom-stage { overflow: auto; height: calc(100% - 44px); padding: var(--s5); }
+dialog.zoom .zoom-stage > * { display: block; max-width: none !important; min-width: 0 !important; margin: 0 auto; }
+
+/* Diagram text and strokes take theme colours. Use these classes inside SVG.
+   Labels are sized in viewBox units; at 1:1 they are the displayed size. */
+svg .d-label { font: 500 13px var(--font-ui, system-ui, sans-serif); fill: var(--fg); }
+svg .d-small { font: 400 12px var(--font-ui, system-ui, sans-serif); fill: var(--fg-muted); }
+svg .d-mark  { font: 650 12px var(--font-ui, system-ui, sans-serif); letter-spacing: 0.06em; fill: var(--fg-subtle); }
+svg .d-box   { fill: var(--surface); stroke: var(--border); stroke-width: 1.25; }
+svg .d-focus { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 1.75; }
+svg .d-edge  { fill: none; stroke: var(--fg-muted); stroke-width: 1.5; }
+svg .d-edge.control  { stroke-dasharray: 7 4; }
+svg .d-edge.evidence { stroke-dasharray: 2 3; }
+svg .d-edge.focus    { stroke: var(--accent); stroke-width: 2.25; }
+/* A zone or group boundary: dashed outline, no fill. */
+svg .d-zone  { fill: none; stroke: var(--border); stroke-width: 1; stroke-dasharray: 4 4; }
+/* Arrowheads: colour from CSS, matched to the line where supported. Use two
+   markers per figure: plain, and class="focus" for accent edges. */
+svg marker path { fill: var(--fg-muted); fill: context-stroke; }
+svg marker.focus path { fill: var(--accent); fill: context-stroke; }
+/* Category nodes: tinted fill, category stroke. Text on them stays --fg. */
+svg .d-cat-1 { fill: var(--surface); fill: color-mix(in srgb, var(--cat-1) 14%, var(--surface)); stroke: var(--cat-1); stroke-width: 1.5; }
+svg .d-cat-2 { fill: var(--surface); fill: color-mix(in srgb, var(--cat-2) 14%, var(--surface)); stroke: var(--cat-2); stroke-width: 1.5; }
+svg .d-cat-3 { fill: var(--surface); fill: color-mix(in srgb, var(--cat-3) 14%, var(--surface)); stroke: var(--cat-3); stroke-width: 1.5; }
+svg .d-cat-4 { fill: var(--surface); fill: color-mix(in srgb, var(--cat-4) 14%, var(--surface)); stroke: var(--cat-4); stroke-width: 1.5; }
+svg .d-cat-5 { fill: var(--surface); fill: color-mix(in srgb, var(--cat-5) 14%, var(--surface)); stroke: var(--cat-5); stroke-width: 1.5; }
+svg .d-cat-6 { fill: var(--surface); fill: color-mix(in srgb, var(--cat-6) 14%, var(--surface)); stroke: var(--cat-6); stroke-width: 1.5; }
+/* Charts: bars, axis, light grid, tick labels, direct value labels. */
+svg .c-bar       { fill: var(--fg-subtle); }
+svg .c-bar.focus { fill: var(--accent); }
+svg .c-cat-1 { fill: var(--cat-1); } svg .c-cat-2 { fill: var(--cat-2); } svg .c-cat-3 { fill: var(--cat-3); }
+svg .c-cat-4 { fill: var(--cat-4); } svg .c-cat-5 { fill: var(--cat-5); } svg .c-cat-6 { fill: var(--cat-6); }
+svg :is(.c-cat-1, .c-cat-2, .c-cat-3, .c-cat-4, .c-cat-5, .c-cat-6) { stroke: var(--surface); stroke-width: 1; } /* hairline gap between stacked segments */
+svg .c-line  { fill: none; stroke: var(--accent); stroke-width: 2; }
+svg .c-axis  { stroke: var(--border); stroke-width: 1; fill: none; }
+svg .c-grid  { stroke: var(--hairline); stroke-width: 1; fill: none; }
+svg .c-tick  { font: 400 12px var(--font-ui, system-ui, sans-serif); fill: var(--fg-muted); font-variant-numeric: tabular-nums; }
+svg .c-label { font: 500 13px var(--font-ui, system-ui, sans-serif); fill: var(--fg); }
+svg .c-value { font: 600 13px var(--font-ui, system-ui, sans-serif); fill: var(--fg); font-variant-numeric: tabular-nums; stroke: var(--surface); stroke-width: 4px; paint-order: stroke; stroke-linejoin: round; }
+/* HTML legend keys for category colours. */
+.key { display: inline-flex; align-items: center; gap: 0.4em; font: 500 var(--fs-sm) var(--font-ui); color: var(--fg-muted); margin-right: var(--s4); }
+.key::before { content: ""; width: 0.8em; height: 0.8em; border-radius: 2px; background: var(--fg-subtle); }
+.key.cat-1::before { background: var(--cat-1); } .key.cat-2::before { background: var(--cat-2); } .key.cat-3::before { background: var(--cat-3); }
+.key.cat-4::before { background: var(--cat-4); } .key.cat-5::before { background: var(--cat-5); } .key.cat-6::before { background: var(--cat-6); }
+.key.focus::before { background: var(--accent); }
+
+/* Annotation focus: dim the context, keep the subject at full contrast. */
+.annotate { position: relative; }
+.annotate .context { opacity: 0.28; filter: saturate(0.4); }
+.annotate .subject { position: relative; z-index: 1; }
+.pointer-note { position: relative; background: var(--surface); border: 1.5px solid var(--accent); border-radius: var(--radius); padding: var(--s3) var(--s4); font: 400 var(--fs-sm)/1.45 var(--font-ui); box-shadow: var(--shadow); max-width: 32ch; }
+.pointer-note::after { content: ""; position: absolute; width: 12px; height: 12px; background: var(--surface); border-right: 1.5px solid var(--accent); border-bottom: 1.5px solid var(--accent); }
+.pointer-note.down::after  { bottom: -7.5px; left: 24px; transform: rotate(45deg); }
+.pointer-note.up::after    { top: -7.5px; left: 24px; transform: rotate(-135deg); }
+.pointer-note.left::after  { left: -7.5px; top: 16px; transform: rotate(135deg); }
+.pointer-note.right::after { right: -7.5px; top: 16px; transform: rotate(-45deg); }
+.pointer-note .n { font-weight: 700; color: var(--accent); margin-right: 0.35em; }
+
+/* ---------- 11. Terms: hover or tap for a definition --------------------- */
+
+/* Phones: the definition is pinned to the bottom of the screen, full width,
+   so it can never push the page sideways. Wider screens: a bubble under the term. */
+.term { border-bottom: 1px dotted var(--fg-subtle); cursor: help; position: static; }
+.term:hover, .term:focus { border-bottom-color: var(--accent); }
+.term:focus { outline: none; }
+.term:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.term[data-def]:hover::after, .term[data-def]:focus::after {
+  content: attr(data-def); position: fixed; left: var(--gutter); right: var(--gutter); bottom: var(--s4); z-index: 20;
+  padding: var(--s3) var(--s4); background: var(--fg); color: var(--bg); border-radius: var(--radius);
+  font: 400 var(--fs-sm)/1.45 var(--font-ui); font-style: normal; box-shadow: var(--shadow); white-space: normal;
+}
+@media (min-width: 720px) {
+  .term { position: relative; }
+  .term[data-def]:hover::after, .term[data-def]:focus::after {
+    position: absolute; left: 0; right: auto; bottom: auto; top: calc(100% + 6px);
+    width: max-content; max-width: min(36ch, calc(100vw - 2 * var(--gutter)));
+  }
+}
+dl.glossary dt { font-family: var(--font-ui); font-weight: 650; margin-top: var(--s4); }
+dl.glossary dd { margin: var(--s1) 0 0; color: var(--fg-muted); }
+
+/* ---------- 12. Progressive disclosure ---------------------------------- */
+
+details { border: 1px solid var(--hairline); border-radius: var(--radius); background: var(--surface); }
+details > summary { cursor: pointer; padding: var(--s3) var(--s4); font-family: var(--font-ui); font-weight: 600; font-size: var(--fs-sm); list-style: none; display: flex; gap: var(--s2); align-items: baseline; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "+"; font-family: var(--font-mono); color: var(--accent); width: 1ch; }
+details[open] > summary::before { content: "\2212"; }
+details[open] > summary { border-bottom: 1px solid var(--hairline); }
+details > .body { padding: var(--s2) var(--s4) var(--s4); }
+details + details { margin-top: var(--s3); }
+@media (min-width: 1100px) { .toc details > summary::before { content: none; } }
+
+/* Tabs. Markup: .tabs > [role=tablist] > button[role=tab][aria-controls],
+   then [role=tabpanel] with ids. Author panels WITHOUT hidden; the script
+   hides the inactive ones. Without script, every panel shows with its label. */
+.tabs [role="tablist"] { display: flex; gap: var(--s1); border-bottom: 1px solid var(--hairline); overflow-x: auto; }
+.tabs [role="tab"] { font: 600 var(--fs-sm) var(--font-ui); padding: var(--s2) var(--s4); border: 0; background: none; color: var(--fg-muted); border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; min-height: 40px; }
+.tabs [role="tab"][aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.tabs [role="tabpanel"] { padding-top: var(--s4); }
+.tabs [role="tabpanel"][hidden] { display: none; }
+.tabs .tab-label { display: none; font: 650 var(--fs-sm) var(--font-ui); }
+.no-js .tabs [role="tablist"] { display: none; }
+.no-js .tabs .tab-label { display: block; }
+
+/* ---------- 13. Forms and controls --------------------------------------- */
+
+label { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: 600; color: var(--fg); }
+.field { display: grid; gap: var(--s1); margin-top: var(--s4); max-width: 40ch; }
+.field .hint { font: 400 var(--fs-xs) var(--font-ui); color: var(--fg-subtle); }
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea {
+  font: 400 var(--fs-sm) var(--font-ui); color: var(--fg); background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; min-height: 40px; width: 100%; max-width: 100%;
+}
+textarea { min-height: 96px; line-height: var(--lh-ui); resize: vertical; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; }
+.check { display: flex; align-items: center; gap: var(--s2); min-height: 40px; font-weight: 500; }
+fieldset { border: 1px solid var(--hairline); border-radius: var(--radius); padding: var(--s3) var(--s4) var(--s4); min-width: 0; }
+legend { font: 650 var(--fs-sm) var(--font-ui); padding: 0 var(--s1); }
+
+/* ---------- 14. Small chrome ------------------------------------------- */
+
+.chip { display: inline-block; font: 600 var(--fs-xs)/1.6 var(--font-ui); padding: 0 0.55em; border-radius: var(--radius-pill); background: var(--sunken); color: var(--fg-muted); }
+.toolbar { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; font: 500 var(--fs-sm) var(--font-ui); }
+.toolbar button, .btn { font: 600 var(--fs-sm) var(--font-ui); padding: 6px 12px; min-height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
+.toolbar button:hover, .btn:hover { border-color: var(--accent); color: var(--accent); }
+.toolbar button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.footnote, .sources { font-family: var(--font-ui); font-size: var(--fs-sm); color: var(--fg-muted); }
+.sources ol { padding-left: 1.4em; }
+sup.fn a { text-decoration: none; font-family: var(--font-ui); font-size: var(--fs-xs); }
+/* Controls that need script are hidden when it does not run. */
+.no-js .zoom-btn, .no-js [data-set-palette], .no-js [data-toggle-theme] { display: none; }
+
+/* ---------- 15. Motion and print --------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+html { scroll-behavior: smooth; }
+:target { scroll-margin-top: var(--s6); }
+
+@media print {
+  /* :root[data-palette] outranks the palette blocks above. */
+  :root, :root[data-palette] { --p-bg: #FFFFFF; --p-surface: #FFFFFF; --p-sunken: #F3F3F1; --p-fg: #111111; --p-fg2: #3D3D3D; --p-fg3: #555555; --p-hairline: #CFCFCF; }
+  @page { margin: 16mm 14mm; }
+  :root, :root[data-theme] { color-scheme: light !important; }
+  html, body { background: #fff !important; }
+  body { font-size: 11pt; }
+  .toc, .zoom-btn, .toolbar, .no-print { display: none !important; }
+  .with-toc { display: block; }
+  .page { max-width: none; padding: 0; }
+  h2, h3, dt { break-after: avoid; }
+  figure, .card, .stat, .callout, .bluf, tr, .compare > .option, ol.steps > li, ol.timeline > li, details, dd { break-inside: avoid; }
+  .table-wrap.scroll-y { max-height: none; overflow: visible; }
+  /* Paper cannot scroll: wide figures shrink to the printed column. */
+  .figure-frame { overflow: visible; }
+  .figure-frame > svg { min-width: 0; max-width: min(100%, calc(var(--fig-min, 800px) * 1.25)); }
+  thead th { position: static; }
+  .tabs [role="tablist"] { display: none; }
+  .tabs [role="tabpanel"][hidden] { display: block; }
+  .tabs .tab-label { display: block; }
+  details { border: 0; background: none; } details > summary { padding: 0; border: 0 !important; font-size: var(--fs-base); } details > summary::before { content: none !important; } details > .body { display: block; padding: var(--s2) 0 0; }
+  /* Closed details print open even without script (Chrome 131+, Safari 18.4+). */
+  details::details-content { content-visibility: visible; display: block; }
+  a { color: inherit; text-decoration: none; }
+  .card, .stat { box-shadow: none; }
+  .term[data-def]::after { content: none !important; }
+}
+
+/* ---------- 16. Page patterns ------------------------------------------ */
+/* Components the six page patterns need (PATTERNS.md). The pattern names the
+   reader's job: <body class="doc|tool" data-pattern="decide|understand|
+   look-up|monitor|do|review">. Script for the filter, the step progress and
+   the print button is in the template's closing script. */
+
+/* Save as PDF: a button that calls window.print(). Hidden in print and with script off. */
+.print-btn { font: 600 var(--fs-sm) var(--font-ui); padding: 6px 12px; min-height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
+.print-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Print-only lines: when a snapshot was taken, which filter a copy was printed with. */
+.print-only { display: none; }
+.snapshot-note { font: 500 var(--fs-sm)/1.45 var(--font-ui); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--s2) var(--s3); margin-top: var(--s4); }
+
+/* Understand: one line at the end of a section that says what the reader now knows and what comes next. */
+.bridge { font: 500 var(--fs-sm)/1.45 var(--font-ui); color: var(--fg-muted); border-top: 1px solid var(--hairline); padding-top: var(--s3); margin-top: var(--s5); }
+
+/* Label and value pairs: one shape for entries, findings and preconditions. */
+dl.fields { display: grid; grid-template-columns: minmax(5.5em, max-content) minmax(0, 1fr); gap: var(--s2) var(--s4); font: 400 var(--fs-sm)/1.45 var(--font-ui); margin-top: var(--s3); }
+dl.fields dt { font-weight: 650; color: var(--fg-muted); }
+dl.fields dd { margin: 0; min-width: 0; }
+dl.fields dd > :first-child { margin-top: 0; }
+@media (max-width: 520px) { dl.fields { grid-template-columns: minmax(0, 1fr); gap: 0; } dl.fields dd + dt { margin-top: var(--s2); } }
+
+/* Filter bar: a search box and groups of chips. Its state lives in the URL
+   hash, so a link reproduces the view. Hidden with script off, when every
+   item shows anyway. */
+.filter { display: flex; flex-wrap: wrap; gap: var(--s3) var(--s5); align-items: flex-end; margin-top: var(--s5); padding: var(--s3) var(--s4); border: 1px solid var(--hairline); border-radius: var(--radius); background: var(--surface); font-family: var(--font-ui); }
+.filter .field { margin-top: 0; flex: 1 1 240px; }
+.filter .chips { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.filter .chips > span { font-size: var(--fs-sm); font-weight: 600; margin-right: var(--s1); }
+.filter .chips button { font: 600 var(--fs-sm) var(--font-ui); min-height: 36px; padding: 4px 12px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface); color: var(--fg-muted); cursor: pointer; }
+.filter .chips button:hover { color: var(--accent); border-color: var(--accent); }
+.filter .chips button[aria-pressed="true"] { color: var(--accent); background: var(--accent-bg); border-color: var(--accent); }
+/* The list says what it shows, in words: "5 of 140 services: expired, Payments". */
+.filter-sentence { font: 600 var(--fs-sm)/1.45 var(--font-ui); margin-top: var(--s3); }
+.filter-empty { font-family: var(--font-ui); font-size: var(--fs-sm); color: var(--fg-muted); }
+.entry[hidden], .finding[hidden], .filter-empty[hidden], .since[hidden] { display: none; }
+.no-js .filter, .no-js .print-btn, .no-js .progress { display: none; }
+/* Sortable columns: the header text is the button; the indicator is a shape
+   (up, down, or both when unsorted). With script off the text stays and the
+   button does nothing. */
+th > button.sort { display: flex; align-items: center; gap: 0.4em; width: 100%; min-height: 28px; margin: 0; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: inherit; cursor: pointer; }
+th.num > button.sort { justify-content: flex-end; }
+th > button.sort::after { content: "\2195"; font-size: 0.85em; color: var(--fg-subtle); flex: none; }
+th[aria-sort="ascending"] > button.sort::after { content: "\25B2"; color: var(--accent); }
+th[aria-sort="descending"] > button.sort::after { content: "\25BC"; color: var(--accent); }
+th > button.sort:hover { color: var(--accent); }
+th > button.sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { th > button.sort { min-height: 40px; } }
+.no-js th > button.sort { pointer-events: none; } .no-js th > button.sort::after { content: none; }
+
+/* A dataset inside a reading page: tool density for one section. Header strip
+   names what is interactive, the sentence says what the table shows, and the
+   table scrolls in a capped frame. See PATTERNS.md, "Mixed pages". */
+section.dataset { font-family: var(--font-ui); font-size: var(--fs-sm); line-height: var(--lh-ui); margin-top: var(--s5); }
+.prose > section.dataset { max-width: none; }
+.dataset-head { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s4); justify-content: space-between; align-items: baseline; border-top: 2px solid var(--hairline); padding-top: var(--s3); }
+.dataset-head > * { margin: 0; }
+.dataset-title { font-weight: 650; font-size: var(--fs-base); }
+.dataset-how { color: var(--fg-muted); }
+section.dataset th, section.dataset td { padding: 6px var(--s3); }
+section.dataset .table-wrap.scroll-y { max-height: min(60vh, 520px); }
+.dataset-print-note { display: none; }
+
+/* Chart marks that filter the records under them: each row is a button. */
+svg .c-hit { fill: transparent; }
+svg [role="button"] { cursor: pointer; outline: none; }
+svg [role="button"]:hover .c-hit { fill: var(--accent-bg); }
+svg [role="button"]:focus-visible .c-hit { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 2; }
+svg [role="button"][aria-pressed="true"] .c-bar { fill: var(--accent); }
+svg [role="button"][aria-pressed="true"] .c-label { text-decoration: underline; }
+
+/* Monitor: what changed since the reader last looked. */
+.since { border: 1px solid var(--hairline); border-left: 4px solid var(--accent); border-radius: var(--radius); background: var(--surface); padding: var(--s3) var(--s4); margin-top: var(--s4); font: 400 var(--fs-sm)/1.45 var(--font-ui); }
+.since > :first-child { margin-top: 0; }
+.since ul { margin-top: var(--s2); }
+
+
+/* Phones: a cell never narrows below a short phrase, so a comparison of three
+   or four options scrolls in its frame instead of stacking single words. A
+   .long column (a sentence per row) keeps a readable width everywhere. */
+@media (max-width: 520px) { .table-wrap :is(th, td) { min-width: 7em; } .table-wrap :is(th, td).num { min-width: 0; } }
+.table-wrap :is(th, td).long { min-width: 16em; }
+
+/* Look up: an index of jump links, then entries that all have the same shape:
+   term, one-line answer, detail, related links. */
+nav.index { font: 500 var(--fs-sm)/1.45 var(--font-ui); margin-top: var(--s5); }
+nav.index .label { display: block; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-subtle); }
+nav.index ul { list-style: none; padding: 0; margin: var(--s2) 0 0; display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); }
+nav.index li + li { margin-top: 0; }
+nav.index ul + .label { margin-top: var(--s4); }
+.entry { border-top: 1px solid var(--hairline); padding-top: var(--s4); margin-top: var(--s4); scroll-margin-top: var(--s6); }
+.entry > :first-child { margin-top: 0; }
+.entry > *, .finding > * { max-width: var(--measure); }
+.prose > .filter, .prose > .finding, .prose > .preconditions, .prose > .progress { max-width: none; }
+.entry h3 { margin-top: 0; font: 650 var(--fs-base)/1.3 var(--font-ui); letter-spacing: 0; }
+.entry .answer { margin-top: var(--s1); }
+.entry .related { font: 400 var(--fs-sm)/1.45 var(--font-ui); color: var(--fg-muted); margin-top: var(--s2); }
+.entry:is(:target, [data-at]) { box-shadow: inset 3px 0 0 var(--accent); padding-left: var(--s4); }
+.finding[data-at] { border-color: var(--accent); }
+
+/* Review: every finding has the same shape. Severity is a .status (a shape and a word). */
+.finding { border: 1px solid var(--hairline); border-radius: var(--radius); background: var(--surface); padding: var(--s4) var(--s5); margin-top: var(--s5); scroll-margin-top: var(--s6); }
+.finding > :first-child { margin-top: 0; }
+.finding h3 { margin-top: 0; font: 650 var(--fs-base)/1.35 var(--font-ui); letter-spacing: 0; }
+.finding .finding-meta { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3); align-items: center; margin-top: var(--s2); font: 500 var(--fs-sm)/1.45 var(--font-ui); color: var(--fg-muted); }
+
+/* Do: who can run the procedure, what access, how long, what to have open. */
+.preconditions { border: 1px solid var(--hairline); border-left: 4px solid var(--accent-2); border-radius: var(--radius); background: var(--surface); padding: var(--s4) var(--s5); margin-top: var(--s5); }
+.preconditions > .label { font: 650 var(--fs-xs) var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2); }
+
+/* Do: one action per step, a box to tick it off, the expected result after it.
+   Ticks are kept per page; they never hide a step. */
+ol.steps.do > li { scroll-margin-top: 4rem; }
+ol.steps.do .step-check { display: flex; align-items: flex-start; gap: var(--s2); font: 650 var(--fs-base)/1.35 var(--font-ui); cursor: pointer; }
+ol.steps.do .step-check input { margin-top: 0.15em; flex: none; }
+/* Commands wrap instead of hiding off the edge of a phone; copying still gets the original line. */
+ol.steps.do pre { margin-top: var(--s2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.expect { font: 400 var(--fs-sm)/1.45 var(--font-ui); color: var(--fg-muted); border-left: 3px solid var(--ok); padding-left: var(--s3); margin-top: var(--s2); }
+.expect strong { color: var(--fg); }
+@media screen { ol.steps.do > li:has(> .step-check input:checked)::before { content: "\2713"; color: var(--ok); background: var(--ok-bg); } }
+/* The progress line stays in view while the steps scroll. Wrap it and its
+   steps in div.procedure so it stops following the reader when they end. */
+.progress { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3); align-items: center; font: 500 var(--fs-sm)/1.45 var(--font-ui); padding: var(--s2) 0; margin-top: var(--s4); background: var(--bg); border-bottom: 1px solid var(--hairline); }
+.progress .spacer { flex: 1; }
+@media screen { .progress { position: sticky; top: 0; z-index: 5; } }
+
+@media print {
+  .print-only { display: block; }
+  .filter, nav.index, .print-btn, .progress { display: none !important; }
+  /* A Look up list prints in full whatever the filter: put .print-all on its container. */
+  .print-all [data-filter-item][hidden], .print-all [data-filter-group][hidden] { display: block !important; }
+  .entry, .finding, .preconditions { break-inside: avoid; }
+  /* Chrome splits a grid across pages even inside an unbreakable box, so the
+     label column is a float on paper. */
+  dl.fields { display: block; }
+  dl.fields dt { float: left; clear: left; width: 7em; }
+  dl.fields dd { margin: 0 0 4pt 7.5em; }
+  .entry:is(:target, [data-at]) { box-shadow: none; padding-left: 0; }
+  /* Paper is denser than a screen: tighter sections, rows and tiles. */
+  h2 { margin-top: 22pt; } th, td { padding: 3pt 6pt; } .stat { padding: 6pt 8pt; } .stats { gap: 8pt; }
+  /* Chrome leaves a button blank in a header row repeated on a new page; display: contents prints its text. */
+  th > button.sort { display: contents; } th > button.sort::after { content: none; }
+  /* A long table repeats its header row on each printed page. */
+  thead { display: table-header-group; }
+  .since, .dataset-how { display: none !important; }
+  section.dataset[data-print="summary"] :is(.table-wrap, .table-note, .filter-empty) { display: none; }
+  section.dataset[data-print="summary"] .dataset-print-note { display: block; }
+  section.dataset .table-wrap.scroll-y { max-height: none; overflow: visible; }
+  /* A printed Look up list is compact: one entry is a few lines. */
+  .entry { padding-top: 6pt; margin-top: 6pt; } .entry > * + * { margin-top: 2pt; }
+  /* Commands print in full. */
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: visible; }
+  /* Paper cannot follow a link: external URLs print after the link text. Put
+     class="no-url" on a link whose text is already the URL. */
+  main a[href^="http"]:not(.no-url)::after { content: " (" attr(href) ")"; font-size: 0.85em; color: var(--fg-muted); overflow-wrap: anywhere; }
+  nav a[href^="http"]::after, figure a[href^="http"]::after { content: none; }
+  /* Do checklists print with empty boxes, unless the reader chose "Print with my progress". */
+  ol.steps.do input[type="checkbox"] { -webkit-appearance: none; appearance: none; width: 12pt; height: 12pt; border: 1pt solid var(--fg); border-radius: 2px; background: none; }
+  :root.print-progress ol.steps.do input[type="checkbox"]:checked { background: var(--fg); box-shadow: inset 0 0 0 2pt #FFFFFF; }
+}
+/* end of base.css */
+/* brand palette: barragan */
+/* Generated by tools/brand.mjs from a brand file. Change the brand file and run it again; do not edit here.
+   Every value is checked: text 4.5:1 on its grounds, borders and categories 3:1, categories at least
+   10 dE76 apart under normal, protan and deutan vision. Dark sits under @media screen, so print is light. */
+:root[data-palette="barragan"] {
+  --p-bg: #F4EFE6; --p-surface: #FBF9F5; --p-sunken: #EAE5DC;
+  --p-fg: #2A2520; --p-fg2: #605B55; --p-fg3: #6C6660;
+  --p-accent: #2C4A6B; --p-accent2: #A04A2C;
+  --p-border: #88837B; --p-hairline: #D2CDC5;
+  --p-tint: #E0E2E4; --p-tint2: #F2E3DC;
+  --p-danger: #A8281F; --p-warn: #8A5300; --p-ok: #2C6B3A;
+  --p-danger-bg: #F8E5E2; --p-warn-bg: #F6ECDA; --p-ok-bg: #E3F0E5;
+  --p-cat-1: #2C4A6B; --p-cat-2: #A04A2C; --p-cat-3: #A7845A;
+  --p-cat-4: #B67B72; --p-cat-5: #4E4AA8; --p-cat-6: #7E2340;
+  --p-scroll-shadow: rgb(0 0 0 / 0.14);
+}
+:root[data-palette="barragan"] {
+  --font-read: "Source Serif 4", "Cardo", "Iowan Old Style", "Charter", "Bitstream Charter", "Source Serif Pro", "Sitka Text", Cambria, Georgia, serif;
+  --font-display: "Source Serif 4", "Cardo", "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Menlo, "Cascadia Code", Consolas, "DejaVu Sans Mono", "Liberation Mono", ui-monospace, monospace;
+  --radius: 2px; --radius-sm: 1px;
+}
+@media screen and (prefers-color-scheme: dark) {
+  :root[data-palette="barragan"]:not([data-theme="light"]) {
+    --p-bg: #13161A; --p-surface: #1A1D21; --p-sunken: #101317;
+    --p-fg: #EDE7E0; --p-fg2: #B2AFAB; --p-fg3: #918F8E;
+    --p-accent: #93B4DB; --p-accent2: #F39575;
+    --p-border: #6B6B6B; --p-hairline: #38393C;
+    --p-tint: #262F39; --p-tint2: #40261D;
+    --p-danger: #FF8A80; --p-warn: #F0B44C; --p-ok: #7CCB8F;
+    --p-danger-bg: #3A1E1C; --p-warn-bg: #362A14; --p-ok-bg: #1C3022;
+    --p-cat-1: #86A8CE; --p-cat-2: #E58869; --p-cat-3: #DAAD89;
+    --p-cat-4: #CF9389; --p-cat-5: #8778DC; --p-cat-6: #C9B23C;
+    --p-scroll-shadow: rgb(255 255 255 / 0.12);
+  }
+}
+@media screen {
+  :root[data-theme="dark"][data-palette="barragan"] {
+    --p-bg: #13161A; --p-surface: #1A1D21; --p-sunken: #101317;
+    --p-fg: #EDE7E0; --p-fg2: #B2AFAB; --p-fg3: #918F8E;
+    --p-accent: #93B4DB; --p-accent2: #F39575;
+    --p-border: #6B6B6B; --p-hairline: #38393C;
+    --p-tint: #262F39; --p-tint2: #40261D;
+    --p-danger: #FF8A80; --p-warn: #F0B44C; --p-ok: #7CCB8F;
+    --p-danger-bg: #3A1E1C; --p-warn-bg: #362A14; --p-ok-bg: #1C3022;
+    --p-cat-1: #86A8CE; --p-cat-2: #E58869; --p-cat-3: #DAAD89;
+    --p-cat-4: #CF9389; --p-cat-5: #8778DC; --p-cat-6: #C9B23C;
+    --p-scroll-shadow: rgb(255 255 255 / 0.12);
+  }
+}
+@media print {
+  :root[data-palette="barragan"] { --p-bg: #FFFFFF; --p-surface: #FFFFFF; --p-sunken: #F3F3F1; --p-fg: #111111; --p-fg2: #3D3D3D; --p-fg3: #555555; --p-hairline: #CFCFCF; }
+}
+/* end brand palette */
+</style>
+<script>
+/* Before first paint: script is on, and the reader's saved theme for this page applies. */
+(() => { const r = document.documentElement, k = "hs:" + location.pathname + ":"; r.classList.remove("no-js");
+  try { const t = localStorage.getItem(k + "theme"), p = localStorage.getItem(k + "palette");
+    if (t && !r.hasAttribute("data-theme")) r.dataset.theme = t;
+    if (p && !r.hasAttribute("data-palette-locked")) r.dataset.palette = p; } catch {} })();
+</script>
+</head>
+<body class="doc" data-pattern="understand">
+<div class="page">
+<style>abbr.rep[title] { text-decoration: none; }
+.sources ol { padding-left: 2.4em; }
+.brief + .brief { margin-top: 2em; } h2 + .brief { margin-top: 1em; }
+@media print {
+  main a[href]::after, main a[href^="http"]:not(.no-url)::after { content: none !important; }
+  tr, .brief, .callout, pre { break-inside: avoid; }
+  p:has(+ .table-wrap), p:has(+ pre), .callout:has(+ ul), .callout:has(+ ol) { break-after: avoid; }
+}</style>
+<header class="masthead">
+  <div class="toolbar no-print"><a href="../">All research</a> · <a href="../about/">How this research is made</a> <button type="button" class="print-btn">Save as PDF</button></div>
+  <div class="kicker">Julie Davila · Research brief · Engineering organizations and <abbr title="artificial intelligence">AI</abbr></div>
+  <h1>Cheap code moves the bottleneck to judgment</h1>
+  <p class="dek">As <abbr title="artificial intelligence" class="rep">AI</abbr> agents make writing code cheap, the scarce work moves to deciding what to build, verifying what agents produce, and pushing decision rights to small teams. This brief collects what companies, researchers and labour-market data show about team shape, roles and pilots as of late 2026.</p>
+  <div class="meta"><span>Version 1.0</span><span>Published 29 Oct 2026</span><span>23 min read</span><span><abbr title="artificial intelligence" class="rep">AI</abbr>-assisted research</span></div>
+</header>
+<main>
+<div class="with-toc">
+<p class="purpose">After reading this brief you can explain how <abbr title="artificial intelligence" class="rep">AI</abbr> coding tools are changing software team size, roles and management, what the evidence does and does not support, and how to run a pilot of a smaller <abbr title="artificial intelligence" class="rep">AI</abbr>-native team that produces honest data.</p>
+<nav class="toc" aria-label="Contents"><details open><summary>Contents</summary><ol>
+<li><a href="#summary">Small owning pods on a strong platform are the emerging pattern</a></li>
+<li><a href="#big-tech-is-delayering-first-and-attributing-it-to-ai-second">Big tech is delayering first and attributing it to <abbr title="artificial intelligence" class="rep">AI</abbr> second</a></li>
+<li><a href="#the-product-engineer-is-pm-light-and-pm-late-not-pm-free">The product engineer is <abbr title="product manager">PM</abbr>-light and <abbr title="product manager" class="rep">PM</abbr>-late, not <abbr title="product manager" class="rep">PM</abbr>-free</a></li>
+<li><a href="#output-rises-delivery-lags-and-stability-pays-the-bill">Output rises, delivery lags, and stability pays the bill</a></li>
+<li><a href="#the-academic-literature-confirms-convergence-and-warns-about">The academic literature confirms convergence and warns about review and learning</a></li>
+<li><a href="#the-junior-pipeline-narrows-through-missing-hires-not-layoff">The junior pipeline narrows through missing hires, not layoffs</a></li>
+<li><a href="#frameworks-agree-on-bounded-agency-platforms-and-decision-ri">Frameworks agree on bounded agency, platforms and decision rights</a></li>
+<li><a href="#what-this-means-for-security-engineering-in-regulated-indust">What this means for security engineering in regulated industries</a></li>
+<li><a href="#transition-from-the-traditional-split-to-an-ai-native-model">Transition: from the traditional split to an <abbr title="artificial intelligence" class="rep">AI</abbr>-native model</a></li>
+<li><a href="#middle-managers-four-paths-and-a-warning">Middle managers: four paths, and a warning</a></li>
+<li><a href="#internal-platform-teams-agents-as-customers-risk-as-value">Internal platform teams: agents as customers, risk as value</a></li>
+<li><a href="#published-pilots-share-a-shape-but-rarely-set-exit-criteria">Published pilots share a shape but rarely set exit criteria</a></li>
+<li><a href="#scarcity-relocates-to-judgment-verification-and-decision-rig">Scarcity relocates to judgment, verification and decision rights</a></li>
+<li class="annex-start"><a href="#how-this-was-made">How this was made</a></li>
+<li><a href="#sources">Sources</a></li>
+</ol></details></nav>
+<div class="prose">
+<h2 id="summary">Small owning pods on a strong platform are the emerging pattern</h2>
+<p>The emerging best practice is <strong>small, flat, multidisciplinary pods of roughly 3 to 6 people who own outcomes end to end, on a strong platform that supplies agent tooling and deterministic guardrails</strong>. Writing code is no longer the hard part; deciding what to build, verifying what agents produce, and pushing decision rights to teams is.</p>
+<p>&quot;Product engineer&quot; is real and spreading, but in documented practice it means <abbr title="product manager" class="rep">PM</abbr>-light and <abbr title="product manager" class="rep">PM</abbr>-late, not <abbr title="product manager" class="rep">PM</abbr>-free. Big tech is cutting layers and shrinking teams, mostly without formally blaming <abbr title="artificial intelligence" class="rep">AI</abbr>. Individual output rises 10 to 30% net on typical enterprise work, while review load, instability and incidents rise with it. Early-career hiring in <abbr title="artificial intelligence" class="rep">AI</abbr>-exposed jobs is down 8 to 19% versus comparison groups. For security organizations in regulated industries, verification and guardrail capacity, not authoring capacity, is the resource to plan around.</p>
+<h2 id="big-tech-is-delayering-first-and-attributing-it-to-ai-second">Big tech is delayering first and attributing it to <abbr title="artificial intelligence" class="rep">AI</abbr> second</h2>
+<p>The consistent 2026 pattern is <strong>fewer layers, wider spans, player-coach managers and small generalist teams</strong>. <abbr title="artificial intelligence" class="rep">AI</abbr> is the stated rationale only some of the time.</p>
+<p><strong>Uber</strong> is the best-documented case. Agent-authored code changes rose from under 1% to about 8% by March 2026, when <abbr title="chief technology officer">CTO</abbr> Praveen Neppalli Naga described a &quot;zero human authoring&quot; workflow where engineers review and approve agent changes (<a href="https://www.aol.com/articles/uber-cto-says-going-big-121842597.html">Business Insider via <abbr title="America Online">AOL</abbr></a>). By April, agents wrote about 11% of live backend updates and Claude Code usage blew past plan (<a href="https://finance.yahoo.com/sectors/technology/articles/ubers-anthropic-ai-push-hits-223109852.html">Benzinga via Yahoo Finance</a>). Spend became the constraint: $500 to $2,000 per engineer per month, then a reported $1,500 cap by June (<a href="https://www.techtimes.com/articles/317842/20260605/uber-cuts-23-hr-staff-new-president-denies-ai-role-95-engineers-use-it-daily.htm">Tech Times</a>). Uber built verification early: its uReview <abbr title="artificial intelligence" class="rep">AI</abbr> reviewer covers over 90% of ~65,000 weekly diffs (<a href="https://www.uber.com/us/en/blog/ureview/">Uber Engineering, Aug 2025</a>). The Sep 2, 2026 layoff of ~3,300 (10%) cut managers 20%, halved one- and two-person teams and merged engineering, science and delivery, with no mention of <abbr title="artificial intelligence" class="rep">AI</abbr> (<a href="https://techcrunch.com/2026/09/02/uber-is-laying-off-10-of-staff-or-3300-people/">TechCrunch</a>; <a href="https://gizmodo.com/ai-or-overhiring-uber-targets-middle-management-with-10-cut-to-workforce-2000806239">Gizmodo</a>). &quot;Agentic Pods&quot; embedded 30 <abbr title="artificial intelligence" class="rep">AI</abbr>-proficient engineers in finance, legal and <abbr title="human resources">HR</abbr>; results are self-reported (<a href="https://www.aol.com/articles/ubers-cto-embedded-top-ai-152402000.html"><abbr title="Business Insider">BI</abbr> via <abbr title="America Online" class="rep">AOL</abbr></a>).</p>
+<p><strong>Meta</strong> made the most explicit <abbr title="artificial intelligence" class="rep">AI</abbr> redesign and the most visible partial reversal. &quot;Project <abbr title="a project code name">OT</abbr>&quot; (Jan 2026) aimed to cut many teams by ~60%, and &quot;<abbr title="artificial intelligence" class="rep">AI</abbr>-native pods&quot; of 3 to 5 were piloted to do the work of 10 to 20 (<a href="https://blog.pragmaticengineer.com/the-pulse-meta-wanted-to-reduce-teams-by-60-because-of-ai/">Pragmatic Engineer</a>). <abbr title="artificial intelligence" class="rep">AI</abbr> impact entered 2026 performance reviews (<a href="https://www.eweek.com/news/meta-ai-performance-reviews/">eWeek</a>). After ~8,000 cuts in May, weighted to managers, Meta began inviting <abbr title="individual contributors">ICs</abbr> back into management by September (<a href="https://fortune.com/2026/09/12/meta-year-of-efficiency-managers-ai-investment/">Fortune</a>). Instagram&#39;s Adam Mosseri describes teams of four to six more generalist engineers (<a href="https://finance.yahoo.com/technology/ai/articles/2-pizza-days-over-heres-095501046.html"><abbr title="Business Insider" class="rep">BI</abbr> via Yahoo Finance</a>).</p>
+<p><strong>Amazon</strong> has the clearest operating-model statement. Werner Vogels amended Working Backwards on Jun 30, 2026 to build a prototype <em>before</em> the doc, with everyone owning the product end to end (<a href="https://www.allthingsdistributed.com/2026/06/return-to-two-pizza-culture.html">All Things Distributed</a>). GeekWire reports projects that took 30 to 40 people now run with 6 to 8; Swami Sivasubramanian claims a median 4.5x gain for restructured teams (internal, self-reported) (<a href="https://www.geekwire.com/2026/how-agentic-ai-is-rewiring-amazons-teams-and-upending-its-traditions/">GeekWire</a>).</p>
+<p><strong>Others:</strong> Google cut 35% of small-team managers in the year to Aug 2025 (<a href="https://www.nbcnews.com/business/business-news/google-eliminated-35-percent-managers-overseeing-small-teams-exec-says-rcna227486"><abbr title="National Broadcasting Company">NBC</abbr> News</a>, headline-level). Microsoft says <abbr title="artificial intelligence" class="rep">AI</abbr> is not behind its Oct 2026 voluntary exit offer; Netflix&#39;s ~1,000 cuts cited no <abbr title="artificial intelligence" class="rep">AI</abbr>; Apple is retraining Siri engineers in an <abbr title="artificial intelligence" class="rep">AI</abbr> coding bootcamp (<a href="https://www.macrumors.com/2026/04/15/siri-engineers-ai-coding-bootcamp/">MacRumors</a>). Coinbase (May 2026) replaced pure managers with player-coaches, capped layers at 5 below the <abbr title="chief executive officer">CEO</abbr> with spans of 15+, and is testing &quot;one person teams&quot; (<a href="https://www.fastcompany.com/91537137/read-the-email-coinbase-ceo-brian-armstrong-sent-when-he-laid-off-14-of-his-staff">Fast Company</a>). Block cut ~40% explicitly citing <abbr title="artificial intelligence" class="rep">AI</abbr> (<a href="https://www.semafor.com/article/02/27/2026/jack-dorseys-block-to-slash-staff-by-40-over-ai-progress">Semafor</a>). Salesforce froze engineering hiring while expecting ~$300M of Anthropic token spend (<a href="https://www.outlookbusiness.com/corporate/300-mn-on-anthropic-zero-on-engineers-inside-salesforces-ai-pivot">Outlook Business</a>). <strong><abbr title="artificial intelligence" class="rep">AI</abbr> spend now competes directly with headcount budgets</strong>. Skeptics including Sam Altman and Forrester call much of this &quot;<abbr title="artificial intelligence" class="rep">AI</abbr> washing&quot; (<a href="https://www.forbes.com/sites/maryroeloffs/2026/05/07/ceos-say-layoffs-are-ais-fault-but-some-experts-think-companies-are-lying/">Forbes</a>).</p>
+<p>&quot;Percent of code written by <abbr title="artificial intelligence" class="rep">AI</abbr>&quot; has become an investor-relations metric, and the figures are not comparable:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Company</th><th scope="col">Claim</th><th scope="col">Date</th><th scope="col">What it likely measures</th><th scope="col">Verification</th></tr></thead><tbody><tr><td>Google</td><td>75% of new code</td><td>Apr 2026</td><td><abbr title="artificial intelligence" class="rep">AI</abbr>-generated new code, definition undisclosed</td><td>Self-reported (<a href="https://www.semafor.com/article/04/24/2026/google-ceo-says-75-of-companys-new-code-is-ai-generated">Semafor</a>)</td></tr><tr><td>Snap</td><td>65%</td><td>Apr 2026</td><td><abbr title="artificial intelligence" class="rep">AI</abbr>-generated code</td><td>Self-reported (same source)</td></tr><tr><td>Airbnb</td><td>60%</td><td>Q1 2026</td><td>Code engineers produced</td><td>Earnings call (<a href="https://techcrunch.com/2026/05/08/airbnb-says-ai-now-writes-60-of-its-new-code/">TechCrunch</a>)</td></tr><tr><td>Uber</td><td>~8% / ~11% / ~70%</td><td>Mar / Apr / Jun 2026</td><td>Fully agent-authored changes / live backend updates / <abbr title="artificial intelligence" class="rep">AI</abbr>-assisted code</td><td>Mixed; 70% is secondary, no method</td></tr><tr><td><abbr title="developer experience">DX</abbr> (cross-industry)</td><td>22% of merged code</td><td>Q4 2025</td><td><abbr title="artificial intelligence" class="rep">AI</abbr>-authored merged code, 135k devs</td><td>Vendor telemetry (<a href="https://getdx.com/report/ai-assisted-engineering-q4-impact-report/"><abbr title="developer experience" class="rep">DX</abbr></a>)</td></tr></tbody></table></div>
+<p>No <abbr title="Facebook, Apple, Amazon, Netflix and Google">FAANG</abbr> company has published a <abbr title="product manager" class="rep">PM</abbr>:eng ratio change, and there is no verified 2026 manager:<abbr title="individual contributor">IC</abbr> ratio for Google or Amazon.</p>
+<h2 id="the-product-engineer-is-pm-light-and-pm-late-not-pm-free">The product engineer is <abbr title="product manager" class="rep">PM</abbr>-light and <abbr title="product manager" class="rep">PM</abbr>-late, not <abbr title="product manager" class="rep">PM</abbr>-free</h2>
+<p>A product engineer is a full-stack engineer who owns a feature from problem framing through shipping, talks to users and judges outcomes, with little or no <abbr title="product manager" class="rep">PM</abbr> layer. Lee Robinson framed it in 2023 as working backwards from the product experience (<a href="https://leerob.com/product-engineers">leerob.com</a>). <strong>PostHog</strong> documents it best: engineers lead product teams, run support rotations and pick the roadmap, and <abbr title="product managers">PMs</abbr> arrive only once a product earns revenue (<a href="https://posthog.com/careers/product-engineer">PostHog careers</a>; <a href="https://posthog.com/handbook/product/product-manager-role.md">handbook</a>). Its co-founder later admitted he was partly wrong to resist <abbr title="product managers" class="rep">PMs</abbr> (<a href="https://newsletter.posthog.com/p/product-management-is-broken-engineers">PostHog newsletter, Dec 2024</a>). <strong>Linear</strong>&#39;s current &quot;Product Engineer, <abbr title="artificial intelligence" class="rep">AI</abbr>&quot; posting adds prompt optimization and model evaluation to the job (<a href="https://linear.app/careers/b4a7764e-c680-4bdf-9956-dc78f2ca94d5">Linear careers</a>). The 2025-26 change is that <strong>evals, prompts and agent-facing surfaces joined the role</strong>. WorkOS runs about 1 <abbr title="product manager" class="rep">PM</abbr> per 80 engineers (<a href="https://newsletter.pragmaticengineer.com/p/when-ai-writes-almost-all-code-what">Pragmatic Engineer, Jan 2026</a>). These exemplars are mostly dev-tools and <abbr title="artificial intelligence" class="rep">AI</abbr>-native companies with technical users, which limits how far the model generalizes.</p>
+<p><strong>LinkedIn</strong> is the only large company with a fully documented ladder change. <abbr title="chief product officer">CPO</abbr> Tomer Cohen introduced the &quot;Full Stack Builder&quot; in Jan 2025, wrote it into hiring and reviews in Aug 2025, and replaced the <abbr title="associate product manager">APM</abbr> program with an &quot;Associate Product Builder&quot; program from Jan 2026 (<a href="https://www.aol.com/articles/linkedin-scrapping-associate-product-manager-063508038.html"><abbr title="Business Insider" class="rep">BI</abbr> via <abbr title="America Online" class="rep">AOL</abbr></a>). Specialist tracks persist (&quot;System Builders&quot; for platforms, &quot;Craft Leaders&quot; for standards) and no consolidation ratio was published; one analysis concludes LinkedIn changed a job description, not a staffing ratio (<a href="https://pearpages.com/blog/2026/08/10/linkedins-full-stack-builder-what-actually-got-merged">pearpages, Aug 2026</a>). Meta retitled ~1,000 developer-tools staff &quot;<abbr title="artificial intelligence" class="rep">AI</abbr> Builder&quot; or &quot;<abbr title="artificial intelligence" class="rep">AI</abbr> Pod Lead&quot; in a March 2026 pilot (<a href="https://the-decoder.com/meta-tests-new-way-of-working-with-ai-native-pods-to-boost-productivity/">The Decoder</a>).</p>
+<p>The voices split into two camps that agree more than they admit:</p>
+<ul>
+<li><strong>Engineers absorb product.</strong> Anthropic&#39;s Boris Cherny expects the &quot;software engineer&quot; title to fade; on his Claude Code team everyone, <abbr title="product manager" class="rep">PM</abbr> and designer included, shares one title and codes (<a href="https://rogerwong.me/2026/02/what-happens-after-coding-is-solved-boris-cherny">Roger Wong, Feb 2026</a>).</li>
+<li><strong>Product becomes the bottleneck.</strong> Anthropic&#39;s Head of Growth says a 5-engineer team now produces the output of 15 to 20, <abbr title="product manager" class="rep">PM</abbr> capacity hasn&#39;t kept up, so Anthropic is <em>hiring more <abbr title="product managers" class="rep">PMs</abbr></em> and deputizing engineers as &quot;mini-<abbr title="product managers" class="rep">PMs</abbr>&quot; on sub-two-week projects (<a href="https://threadreaderapp.com/thread/2041166073794592926.html">Lenny&#39;s thread, Apr 2026</a>, secondhand). <abbr title="Silicon Valley Product Group">SVPG</abbr> argues the product trio persists because discovery still needs distinct judgment (<a href="https://www.svpg.com/ai-resource-guide/"><abbr title="Silicon Valley Product Group" class="rep">SVPG</abbr></a>).</li>
+<li><strong>Andrew Ng moved.</strong> In mid-2025 he relayed a team proposing 2 <abbr title="product managers" class="rep">PMs</abbr> per engineer (<a href="https://hackernoon.com/andrew-ng-product-team-ratios-evolving-to-just-one-software-developer-for-every-two-product-manager">HackerNoon</a>); by Apr 2026 he saw engineer:<abbr title="product manager" class="rep">PM</abbr> ratios moving from about 8:1 toward 1:1 as engineers take on product work (<a href="https://www.deeplearning.ai/the-batch/issue-349/">The Batch #349</a>).</li>
+</ul>
+<p>Both camps agree handoffs (<abbr title="product requirements document">PRD</abbr> → ticket → implementation) are shrinking and judgment is the scarce input; they differ on whether it sits in a specialist <abbr title="product manager" class="rep">PM</abbr> or in every builder.</p>
+<p>The day-to-day loop: prototype several variants with agents instead of writing specs (Simon Willison: a UI prototype is &quot;free now&quot;; <a href="https://simonwillison.net/2026/Apr/2/lennys-podcast/">simonwillison.net</a>), pick through usage data or evals (&quot;evals are the new <abbr title="product requirements documents">PRDs</abbr>&quot;, Anthropic&#39;s Dianne Penn; <a href="https://completeaitraining.com/news/evals-replace-prds-as-core-tool-for-ai-product-managers/">summary</a>), harden, measure, and unship. Non-engineers ship too: Intercom set a goal for <abbr title="product managers" class="rep">PMs</abbr>, designers and <abbr title="engineering managers">EMs</abbr> to ship small changes (<a href="https://ideas.fin.ai/p/2">Fin Ideas</a>); Ramp reportedly saw ~1,000 <abbr title="pull requests">PRs</abbr> a month from non-engineers and split <abbr title="product manager" class="rep">PM</abbr> into Technical <abbr title="product manager" class="rep">PM</abbr>, Taste-maker and <abbr title="general manager">GM</abbr> tracks (<a href="https://blog.buildbetter.ai/ramp-ai-product-factory-internal-tools/">BuildBetter</a>, secondhand). <abbr title="product manager" class="rep">PM</abbr> demand data conflict: TrueUp via Lenny Rachitsky showed <abbr title="product manager" class="rep">PM</abbr> openings at a three-year high in Mar 2026 (<a href="https://x.com/lennysan/status/2036483059407810640">X</a>), while a report cited by Forbes claims a 30% decline (<a href="https://www.forbes.com/sites/larryenglish/2026/07/30/ai-is-rewriting-the-rules-of-product-development/">Forbes</a>).</p>
+<h2 id="output-rises-delivery-lags-and-stability-pays-the-bill">Output rises, delivery lags, and stability pays the bill</h2>
+<p>The evidence trades rigor against recency: the cleanest <abbr title="randomized controlled trials">RCTs</abbr> predate agentic tools, and agentic-era data is mostly vendor telemetry and surveys.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Study</th><th scope="col">Design, sample</th><th scope="col">Finding</th></tr></thead><tbody><tr><td><a href="https://metr.org/blog/2026-02-24-uplift-update/"><abbr title="Model Evaluation and Threat Research">METR</abbr> follow-up, Feb 2026</a></td><td><abbr title="randomized controlled trial">RCT</abbr>, 57 devs, 800+ tasks</td><td>Broke down: devs refused to work without <abbr title="artificial intelligence" class="rep">AI</abbr>; <abbr title="Model Evaluation and Threat Research" class="rep">METR</abbr> now thinks true speedup exceeds what it can measure</td></tr><tr><td><a href="https://www.faros.ai/blog/ai-acceleration-whiplash-takeaways">Faros <abbr title="artificial intelligence" class="rep">AI</abbr>, 2026</a></td><td>Vendor telemetry, 22k devs</td><td>Throughput +34%, review time +441%, unreviewed merges +31%, incidents per <abbr title="pull request">PR</abbr> +243%</td></tr><tr><td><a href="https://dora.dev/insights/dora-2025-year-in-review/"><abbr title="DevOps Research and Assessment">DORA</abbr> 2025</a></td><td>Survey, ~5,000</td><td>Throughput link turned positive; instability still elevated; <abbr title="artificial intelligence" class="rep">AI</abbr> amplifies the existing system</td></tr><tr><td><a href="https://www.sirris.be/en/inspiration/how-much-more-productive-does-ai-make-developers">Stanford, Denisov-Blanch</a></td><td>Telemetry, ~100k devs</td><td>15-20% net of rework; 5-10% on complex brownfield; not peer-reviewed</td></tr><tr><td><a href="https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/"><abbr title="Model Evaluation and Threat Research" class="rep">METR</abbr>, Jul 2025</a></td><td><abbr title="randomized controlled trial" class="rep">RCT</abbr>, 16 experienced <abbr title="open-source software">OSS</abbr> devs</td><td>19% slower, while believing they were ~20% faster</td></tr><tr><td><a href="https://devclass.com/2025/02/20/ai-is-eroding-code-quality-states-new-in-depth-report/">GitClear</a></td><td>Vendor, 2024 code data</td><td>Duplicated blocks ~8x; refactoring −40%</td></tr><tr><td><a href="https://arxiv.org/abs/2410.12944">Google <abbr title="randomized controlled trial" class="rep">RCT</abbr></a></td><td><abbr title="randomized controlled trial" class="rep">RCT</abbr>, 96 engineers, 2024</td><td>~21% faster task completion</td></tr><tr><td><a href="https://economics.mit.edu/sites/default/files/inline-files/draft_copilot_experiments.pdf">Cui, Demirer et al.</a></td><td>Field <abbr title="randomized controlled trials" class="rep">RCTs</abbr>, 4,867 devs (Microsoft, Accenture, Fortune 100)</td><td><abbr title="pull requests" class="rep">PRs</abbr> +26%; build success −5.5% (−17.4% at Accenture)</td></tr><tr><td><a href="https://cloud.google.com/blog/products/devops-sre/announcing-the-2024-dora-report"><abbr title="DevOps Research and Assessment" class="rep">DORA</abbr> 2024</a></td><td>Survey</td><td>Each +25% <abbr title="artificial intelligence" class="rep">AI</abbr> adoption: stability −7.2%</td></tr></tbody></table></div>
+<p><abbr title="DevOps Research and Assessment" class="rep">DORA</abbr> 2025 names seven capabilities that turn individual gains into organizational ones, including quality internal platforms, small batches and a clear <abbr title="artificial intelligence" class="rep">AI</abbr> stance (<a href="https://redmonk.com/rstephens/2025/12/18/dora2025/">RedMonk</a>). Qodo&#39;s Sep 2026 survey (a vendor that sells <abbr title="artificial intelligence" class="rep">AI</abbr> review) finds reviewing <abbr title="artificial intelligence" class="rep">AI</abbr> code the top delivery bottleneck, and only 45% of leaders can trace <abbr title="artificial intelligence" class="rep">AI</abbr> activity to code changes (<a href="https://www.qodo.ai/blog/state-of-ai-code-quality-report-2026/">Qodo</a>). Charity Majors&#39; summary: <abbr title="artificial intelligence" class="rep">AI</abbr> demands more engineering discipline, not less (<a href="https://simonwillison.net/2026/Jun/17/charity-majors/">via Simon Willison</a>).</p>
+<p>Two results support small autonomous units. In a pre-registered <abbr title="randomized controlled trial" class="rep">RCT</abbr> of 776 P&amp;G professionals, <strong>one person with <abbr title="artificial intelligence" class="rep">AI</abbr> matched a two-person team without it</strong> and bridged R&amp;D/commercial silos (<a href="https://www.nber.org/papers/w33641"><abbr title="National Bureau of Economic Research">NBER</abbr> w33641</a>; non-software). A GitHub quasi-experiment found Copilot shifted maintainers from coordination toward coding, more autonomous and less collaborative (<a href="https://ideas.repec.org/p/ces/ceswps/_11479.html">CESifo <abbr title="working paper">WP</abbr> 11479</a>). Together: <abbr title="artificial intelligence" class="rep">AI</abbr> makes the individual a more complete unit but loads verification and operations, so <strong>small pods need stronger platform, quality and <abbr title="site reliability engineering">SRE</abbr> support, not less</strong>.</p>
+<h2 id="the-academic-literature-confirms-convergence-and-warns-about">The academic literature confirms convergence and warns about review and learning</h2>
+<p>A structured literature screen in Elicit of 20 papers (2022-2026) lands where industry does: <strong>role convergence runs both ways, and gains track workflow redesign rather than tool access</strong>.</p>
+<ul>
+<li><strong>Convergence.</strong> Ulloa et al. (2025) surveyed 885 Microsoft <abbr title="product managers" class="rep">PMs</abbr> plus telemetry: <abbr title="product managers" class="rep">PMs</abbr> now script, prototype and build agents, with delegation shaped by identity and accountability. Li et al. (2025, 22 interviews) found designers coding more and developers shifting to oversight and product thinking, with new asymmetries in trust and responsibility. Zhang et al. (2026) describe vertically integrated &quot;Super-Cells&quot;; their 8-33x person-month reduction is a projection, not a measurement.</li>
+<li><strong>Capacity.</strong> He et al. (2026), a staggered diff-in-diff on 802 developers and 196,212 <abbr title="pull requests" class="rep">PRs</abbr> under a &quot;2x&quot; mandate: merged <abbr title="pull requests" class="rep">PRs</abbr> per engineer hit 2.09x at peak (1.46x attributable to adoption), <strong>per-reviewer load roughly doubled</strong>, automated review overtook human review, and merge and revert rates held. Song et al. (2024): +5.9% merged <abbr title="pull requests" class="rep">PRs</abbr> in open source but +41.6% integration time.</li>
+<li><strong>Experience.</strong> Vella &amp; Blincoe (2026) followed 158 engineers for six months: 84% reported productivity gains, yet those reporting worse developer experience rose from 14% to 27%. They name the new category &quot;supervisory engineering work.&quot;</li>
+<li><strong>Closest analog.</strong> Vilas Boas et al. (2026): one staff engineer with four agents at a <strong>financial institution</strong> delivered five features in three sprints vs. six planned for a four-person team, with 90% first-review acceptance. Binding constraints were spec quality and institutional knowledge; authors say it is no general substitute for teams outside bounded, familiar brownfield work.</li>
+<li><strong>Team learning.</strong> Ulfsnes et al. (2024): consulting <abbr title="artificial intelligence" class="rep">AI</abbr> instead of colleagues disrupts knowledge sharing (&quot;pair prompting&quot; helps). Miller et al. (2025): productivity pressure without learning support undermines the skill growth that produces the gains. Rico &amp; Öberg (2025) and Sun &amp; Staron (2026) expect managers to move into <abbr title="artificial intelligence" class="rep">AI</abbr> governance, with traceability and artifact certification still open problems.</li>
+</ul>
+<p>Caveat: the literature is mostly qualitative and single-organization, and <strong>no large-sample study yet measures <abbr title="artificial intelligence" class="rep">AI</abbr>-driven team-size change directly</strong>.</p>
+<h2 id="the-junior-pipeline-narrows-through-missing-hires-not-layoff">The junior pipeline narrows through missing hires, not layoffs</h2>
+<p>Labor-market data is the most rigorous evidence here, and it points to a slow-building senior-pipeline risk.</p>
+<ul>
+<li>Stanford&#39;s &quot;Canaries in the Coal Mine&quot; (<abbr title="Automatic Data Processing, a payroll company">ADP</abbr> payroll data): employment for 22-25-year-olds in <abbr title="artificial intelligence" class="rep">AI</abbr>-exposed jobs is <strong>19% below</strong> the counterfactual as of Jun 2026, up from 13% a year earlier, through reduced hiring, not separations; descriptive, not causal (<a href="https://digitaleconomy.stanford.edu/publication/canaries-in-the-coal-mine-six-facts-about-the-recent-employment-effects-of-artificial-intelligence/">Stanford <abbr title="Digital Economy Lab">DEL</abbr></a>).</li>
+<li>Hosseini &amp; Lichtinger: junior employment at GenAI-adopting firms down 9-10% after six quarters while senior employment kept growing (<a href="https://www.alejandrobarros.com/wp-content/uploads/2025/11/ssrn-5425555.pdf"><abbr title="Social Science Research Network">SSRN</abbr> 5425555</a>).</li>
+<li>Indeed: software postings are 27.5% below Feb 2020, and <strong>senior roles account for 71%</strong> of the 2025-26 rebound (<a href="https://hiringlab.indeed.com/2026/07/08/ai-and-job-postings-from-destruction-to-creation/">Indeed Hiring Lab, Jul 2026</a>).</li>
+<li>Bain: juniors fell from about a third of team composition to under a fifth (<a href="https://www.bain.com/insights/the-half-finished-redesign-how-ai-reshapes-software-organizations-technology-report-2026/">Bain, Sep 2026</a>). Gartner predicts firms cutting junior roles will have weakened talent pipelines by 2028.</li>
+</ul>
+<p>This sits awkwardly with the field experiments, where juniors gained <em>most</em> from <abbr title="artificial intelligence" class="rep">AI</abbr> (Cui et al., though mostly not significant). Firms appear to be substituting <abbr title="artificial intelligence" class="rep">AI</abbr> for junior task bundles rather than amplifying juniors, leaving no clear source for tomorrow&#39;s senior reviewers.</p>
+<p>Management is reshaping too. Gergely Orosz sees <abbr title="engineering managers" class="rep">EMs</abbr> managing 12 to 14 people, up from 4 to 8; Will Larson says tech-lead managers are in demand and leadership &quot;as we know it&quot; won&#39;t survive three years (<a href="https://newsletter.pragmaticengineer.com/p/the-revised-rules-of-engineering">Pragmatic Engineer, Oct 2026</a>). Meta&#39;s September move back toward managers is the counterweight: over-flattening costs workload strain and lost domain knowledge.</p>
+<h2 id="frameworks-agree-on-bounded-agency-platforms-and-decision-ri">Frameworks agree on bounded agency, platforms and decision rights</h2>
+<p><strong>Gartner</strong> (Jul 2026) predicts 60% of organizations will run &quot;tiny teams&quot; of 4-5 at scale by 2029, up from 15% in 2026, including a <abbr title="product manager" class="rep">PM</abbr> and an &quot;agent experience&quot; designer, on platform engineering, and explicitly not as cost optimization (<a href="https://www.peoplematters.in/news/ai-and-emerging-tech/60percent-of-organisations-to-adopt-smaller-software-engineering-teams-by-2029-gartner-50748">People Matters recap</a>; primary not retrieved).</p>
+<p><strong>Bain</strong>&#39;s &quot;Half-Finished Redesign&quot; (n=155) gives the sharpest diagnosis. Traditional pyramids fell from 66% to 29% and engineer time spent directing agents rose from 4% to 23%, but <strong>70% still decide centrally</strong>, so approvals and escalations haven&#39;t moved. The fix is redistributing decision rights: where humans decide, where agents act, who owns the outcome (<a href="https://www.bain.com/insights/the-half-finished-redesign-how-ai-reshapes-software-organizations-technology-report-2026/">Bain, Sep 2026</a>). <strong>McKinsey</strong> recommends cross-functional pods with governance expertise plus an <abbr title="artificial intelligence" class="rep">AI</abbr>-native platform team owning guardrails, and names a &quot;model governance officer&quot; role (<a href="https://www.mckinsey.com/capabilities/tech-and-ai/our-insights/tech-forward/ai-native-development-rethinking-software-from-the-ground-up">McKinsey, Jul 2026</a>).</p>
+<p><strong>Team Topologies</strong> carries over largely intact, per Matthew Skelton: stream-aligned teams steward services, platforms deliver capability as a service, and cognitive-load limits map to agent context windows. He adds <strong>&quot;bounded agency&quot;</strong> (citing <abbr title="Open Worldwide Application Security Project">OWASP</abbr> LLM06 Excessive Agency) and an &quot;Innovation and Practices Enabling Team&quot; that spreads working patterns by opt-in, not mandate (<a href="https://infoq.com/news/2026/03/ai-agency-team-topologies">InfoQ, Mar 2026</a>). Kief Morris on martinfowler.com puts humans &quot;on the loop&quot;: engineer the harness of specs, checks, evals and telemetry, and fix the system rather than each artifact (<a href="https://github.com/MLOpsEngineer/harness-engineering/blob/main/docs/blogs/2026-03-04-martinfowler-humans-and-agents-in-software-engineering-loops.md">summary</a>). Thoughtworks Radar Vol. 34 calls for a return to fundamentals against &quot;cognitive debt&quot; and treats zero trust and sandboxing for agents as table stakes (<a href="https://www.prnewswire.com/news-releases/as-ai-accelerates-software-complexity-thoughtworks-technology-radar-urges-a-return-to-engineering-fundamentals-to-combat-cognitive-debt-302737210.html"><abbr title="pull request" class="rep">PR</abbr> Newswire</a>).</p>
+<p><strong>Security</strong> guidance has converged on treating agents as identities. At the May 2026 <abbr title="San Francisco">SF</abbr> AppSec Summit, practitioners said manual code review is no longer the primary control, and recommended a revocable identity per agent, logged tool calls, per-invocation scoping, sandboxing, egress allowlists, no ambient credentials, and human approval for irreversible actions (<a href="https://blog.gitguardian.com/san-francisco-secure-software-and-appsec-summit-2026/">GitGuardian recap</a>, vendor-hosted). A practitioner mapping adds that guardrails must be deterministic code, not prompts, and a guardrail duplicated across three teams belongs in the platform (<a href="https://blog.owulveryck.info/2026/06/24/who-does-what-team-topologies-for-the-agentic-platform.html">Wulveryck, Jun 2026</a>). No source publishes AppSec:developer or reviewer:agent ratios for the agent era.</p>
+<h2 id="what-this-means-for-security-engineering-in-regulated-indust">What this means for security engineering in regulated industries</h2>
+<p><em>Synthesis and judgment drawn from the evidence above, not sourced fact.</em></p>
+<p><strong>Team shape.</strong> Move toward stream-aligned pods of about 4 to 6 that own a security product or control end to end: problem, build, rollout, adoption metrics and on-call. Write &quot;product engineer&quot; into the ladder as expectations (user contact, outcome ownership, evals) rather than using it to remove roles. Keep a distinct platform function that supplies the paved road for agent use, and consider a small enabling team that spreads working agent patterns across the enterprise. Avoid one- and two-person teams for regulated controls: Uber halved them, and key-person and segregation-of-duties risk make them fragile under audit. Flatten deliberately; Meta&#39;s reversal shows removing managers faster than domain knowledge can move costs more than it saves.</p>
+<p><strong>Review and verification capacity.</strong> Plan for per-reviewer load to roughly double as authoring speeds up (He et al.), and budget reviewer time explicitly. Brownfield, compliance-heavy code sits at the low end of the gain range, so don&#39;t size teams on vendor or big-tech figures. Point human review at intent, design, threat models and irreversible changes; let <abbr title="artificial intelligence" class="rep">AI</abbr> first-pass review and deterministic checks (policy-as-code, mutation tests, generation-time <abbr title="static application security testing">SAST</abbr> and secrets scanning) handle line-level work. Track review latency, <abbr title="pull request" class="rep">PR</abbr> size, unreviewed-merge rate, change failure rate and incidents per change. Percent of <abbr title="artificial intelligence" class="rep">AI</abbr>-written code and <abbr title="pull request" class="rep">PR</abbr> counts measure activity, not outcomes.</p>
+<p><strong>Guardrails for agents.</strong> This is where a security engineering org has the most enterprise leverage, and it is a natural platform product: per-agent revocable identities, scoped short-lived credentials, sandboxed execution, egress allowlists, logged tool calls, approval gated on reversibility, and <strong>traceability from agent activity to code change</strong>: the gap only 45% of leaders say they can close, and one regulators and auditors will ask about. Guardrails should be code, not prompts, and apply equally to humans, agents and pipelines. Expect <abbr title="artificial intelligence" class="rep">AI</abbr> spend to compete with headcount, as at Uber and Salesforce, and build cost observability into the platform.</p>
+<p><strong>Junior pipeline.</strong> Keep hiring early-career engineers deliberately, as a resilience investment. Redesign the junior role around verification, threat modeling, eval writing and supervised agent direction, and pair juniors with seniors (&quot;pair prompting&quot;) to offset the team-learning loss the literature documents. Don&#39;t attach productivity targets to juniors without learning support.</p>
+<p><strong><abbr title="product manager" class="rep">PM</abbr>:eng.</strong> For a security platform whose customers are internal engineering teams, a <abbr title="product manager" class="rep">PM</abbr>-light model (roughly one product-minded lead per one to three pods, engineers as mini-<abbr title="product managers" class="rep">PMs</abbr> on small scopes) is defensible because users are technical and reachable. Don&#39;t drop product judgment: adoption, prioritization across business lines and alignment with risk, compliance and audit are exactly the coordination work no source says <abbr title="artificial intelligence" class="rep">AI</abbr> has automated.</p>
+<h2 id="transition-from-the-traditional-split-to-an-ai-native-model">Transition: from the traditional split to an <abbr title="artificial intelligence" class="rep">AI</abbr>-native model</h2>
+<p>The documented cases follow a recognizable order; the firms that skipped steps are the ones patching side effects.</p>
+<ol>
+<li><strong>Change job definitions before headcount.</strong> LinkedIn rewrote its ladder (Full Stack Builder) and hiring and review criteria first, and never published a consolidation ratio.</li>
+<li><strong>Pilot pods on bounded work.</strong> Meta piloted 3-5 person &quot;<abbr title="artificial intelligence" class="rep">AI</abbr>-native pods&quot;; the Vilas Boas bank case worked because the work was familiar brownfield with tight specs. Amazon changed Working Backwards to build a prototype before the doc.</li>
+<li><strong>Build the harness before scaling.</strong> Uber had its <abbr title="artificial intelligence" class="rep">AI</abbr> reviewer (uReview) covering 90%+ of diffs before agent-written code reached 8-11% of changes. <abbr title="DevOps Research and Assessment" class="rep">DORA</abbr>&#39;s framing: <abbr title="artificial intelligence" class="rep">AI</abbr> amplifies whatever system it lands in.</li>
+<li><strong>Move decision rights, not just boxes.</strong> Bain&#39;s central warning: most firms reshaped teams, but 70% still decide centrally, so approvals and escalations became the new bottleneck. Define where humans decide, where agents act, and who owns each outcome.</li>
+<li><strong>Then resize.</strong> Meta and Uber cut first and are now adjusting (Meta re-adding managers; Uber capping <abbr title="artificial intelligence" class="rep">AI</abbr> spend).</li>
+</ol>
+<p><em>Synthesis:</em> run it as a sequence of experiments with explicit exit criteria rather than a single reorg. Gate each step on leading indicators: review latency, <abbr title="pull request" class="rep">PR</abbr> size, unreviewed-merge rate, change failure rate, incidents per change, never on <abbr title="pull request" class="rep">PR</abbr> counts or percent of <abbr title="artificial intelligence" class="rep">AI</abbr>-written code.</p>
+<h2 id="middle-managers-four-paths-and-a-warning">Middle managers: four paths, and a warning</h2>
+<p>The evidence shows where managers are going, but almost nothing on how to make the transition well.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Path</th><th scope="col">What it looks like</th><th scope="col">Evidence</th></tr></thead><tbody><tr><td>Player-coach, wider span</td><td>Hands-on lead with 12-15+ reports</td><td>Coinbase: no &quot;pure managers&quot;, 5 layers max, spans 15+ (<a href="https://www.fastcompany.com/91537137/read-the-email-coinbase-ceo-brian-armstrong-sent-when-he-laid-off-14-of-his-staff">Fast Company</a>); Orosz sees <abbr title="engineering manager">EM</abbr> spans of 12-14, up from 4-8</td></tr><tr><td>Tech lead manager or <abbr title="individual contributor" class="rep">IC</abbr></td><td>Back to building, leading a small pod</td><td>Will Larson: <abbr title="tech lead managers">TLMs</abbr> in high demand (<a href="https://newsletter.pragmaticengineer.com/p/the-revised-rules-of-engineering">Pragmatic Engineer</a>)</td></tr><tr><td><abbr title="artificial intelligence" class="rep">AI</abbr> governance and enablement</td><td>Owns agent policy, practices, adoption</td><td>Rico &amp; Öberg 2025, Sun &amp; Staron 2026 (Elicit review); McKinsey&#39;s &quot;model governance officer&quot;; Skelton&#39;s enabling team</td></tr><tr><td>Product lead</td><td><abbr title="product manager" class="rep">PM</abbr>-light owner across a few pods</td><td>Anthropic&#39;s &quot;mini-<abbr title="product manager" class="rep">PM</abbr>&quot; pattern; Ng&#39;s shifting <abbr title="product manager" class="rep">PM</abbr>:eng ratios</td></tr></tbody></table></div>
+<p>The warning is Meta: it cut ~8,000 in May 2026, weighted to managers, then began inviting <abbr title="individual contributors" class="rep">ICs</abbr> back into management by September (<a href="https://fortune.com/2026/09/12/meta-year-of-efficiency-managers-ai-investment/">Fortune</a>). Coordination load and domain knowledge don&#39;t disappear with the role. Uber&#39;s 20% manager cut came with merged divisions, not a stated <abbr title="artificial intelligence" class="rep">AI</abbr> rationale.</p>
+<p><em>Synthesis:</em> in a regulated organization, governance, risk ownership and audit liaison are real landing spots, not consolation prizes, because that coordination work is exactly what <abbr title="artificial intelligence" class="rep">AI</abbr> hasn&#39;t automated. Decide each manager&#39;s path explicitly and early, and widen spans only as platform tooling and decision rights actually reduce coordination load.</p>
+<h2 id="internal-platform-teams-agents-as-customers-risk-as-value">Internal platform teams: agents as customers, risk as value</h2>
+<p>Every source treats platforms as more important in this model, not less: <abbr title="DevOps Research and Assessment" class="rep">DORA</abbr> 2025 lists quality internal platforms among its seven <abbr title="artificial intelligence" class="rep">AI</abbr> capabilities, and McKinsey puts guardrails in a dedicated <abbr title="artificial intelligence" class="rep">AI</abbr> platform team.</p>
+<ul>
+<li><strong>Agents are now customers too.</strong> Expose capabilities through <abbr title="application programming interfaces">APIs</abbr> and <abbr title="Model Context Protocol">MCP</abbr>, and make internal docs and data <abbr title="artificial intelligence" class="rep">AI</abbr>-accessible (another <abbr title="DevOps Research and Assessment" class="rep">DORA</abbr> capability). Design the paved road for agents as well as engineers.</li>
+<li><strong>Guardrails as a product.</strong> Ship agent identity, scoped short-lived credentials, sandboxing, egress controls and agent-to-code traceability as deterministic code, not prompts. A guardrail duplicated across three teams moves into the platform (<a href="https://blog.owulveryck.info/2026/06/24/who-does-what-team-topologies-for-the-agentic-platform.html">Wulveryck</a>).</li>
+<li><strong>Verification as a service.</strong> <abbr title="artificial intelligence" class="rep">AI</abbr> first-pass review, policy-as-code and generation-time scanning absorb the review load that roughly doubles per reviewer (He et al.).</li>
+<li><strong>Cost observability.</strong> <abbr title="artificial intelligence" class="rep">AI</abbr> token spend now competes with headcount (Uber, Salesforce); the platform should make spend per team and per workflow visible.</li>
+<li><strong>Keep a product function.</strong> Internal users are technical and reachable, so <abbr title="product manager" class="rep">PM</abbr>-light fits, but cross-business prioritization and alignment with risk, compliance and audit still need an owner.</li>
+</ul>
+<p><em>Synthesis: risk as measurable value delivery.</em> Treat each control as a product with adoption and outcome metrics, so risk reduction shows up as value rather than overhead:</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Value claim</th><th scope="col">Example metric</th></tr></thead><tbody><tr><td>Paved-road adoption</td><td>% of changes (human and agent) through the paved road</td></tr><tr><td>Auditability</td><td>% of agent activity traceable to a code change</td></tr><tr><td>Exposure reduced</td><td>Time to remediate; standing credentials eliminated</td></tr><tr><td>Delivery unblocked</td><td>Review latency and approval wait time saved</td></tr><tr><td>Cost governed</td><td><abbr title="artificial intelligence" class="rep">AI</abbr> spend per team vs. budget</td></tr></tbody></table></div>
+<p><abbr title="DevOps Research and Assessment" class="rep">DORA</abbr> names value stream management as what turns individual <abbr title="artificial intelligence" class="rep">AI</abbr> gains into organizational ones, so these metrics can sit directly on a value stream map alongside delivery work.</p>
+<h2 id="published-pilots-share-a-shape-but-rarely-set-exit-criteria">Published pilots share a shape but rarely set exit criteria</h2>
+<p>The published pilots share a shape: bounded scope, short time box, a baseline to beat, and a human validation gate. What they mostly lack is exit criteria and downstream measurement: the academic studies find the costs show up in review load, incidents and team learning, which pilots rarely track.</p>
+<h3 id="documented-examples">Documented examples</h3>
+<div class="table-wrap"><table><thead><tr><th scope="col">Pilot</th><th scope="col">Shape</th><th scope="col">Result</th><th scope="col">Caveat</th></tr></thead><tbody><tr><td>Vilas Boas et al., bank (2026)</td><td>1 staff engineer + 4 agents on a backlog planned for 4 people</td><td>5 features in 3 sprints vs. 6 planned; 90% first-review acceptance</td><td>Familiar brownfield, tight specs; human validation on every feature</td></tr><tr><td>Amazon Bedrock rebuild</td><td>6 engineers on a contained rebuild</td><td>76 days vs. est. 30 engineers × 12-18 months</td><td>Internal, self-reported; clear target, not discovery</td></tr><tr><td>Meta <abbr title="artificial intelligence" class="rep">AI</abbr>-native pods (Feb 2026)</td><td>3-5 people given work of 10-20; ~1,000 retitled &quot;<abbr title="artificial intelligence" class="rep">AI</abbr> Builder&quot; / &quot;<abbr title="artificial intelligence" class="rep">AI</abbr> Pod Lead&quot;</td><td>Led into broader team cuts</td><td>Domain experts left; managers partly re-added by Sep 2026</td></tr><tr><td>Uber Agentic Pods (2026)</td><td>30 engineers on two-week embeds in finance, legal, <abbr title="human resources" class="rep">HR</abbr></td><td>e.g. a 2-day report cut to 10 minutes</td><td>Self-reported; automation of other teams, not an eng reorg</td></tr><tr><td>Intercom, Ramp</td><td><abbr title="product managers" class="rep">PMs</abbr>, designers, <abbr title="engineering managers" class="rep">EMs</abbr> shipping small changes</td><td>Ramp: ~1,000 non-engineer <abbr title="pull requests" class="rep">PRs</abbr> a month</td><td>Deploy previews as the safety net; secondhand</td></tr><tr><td>Coinbase (May 2026)</td><td>&quot;One-person teams&quot; spanning eng, design, product</td><td>No results published</td><td>Announced alongside 14% layoffs</td></tr></tbody></table></div>
+<h3 id="what-org-and-people-theory-says-about-pilot-design">What org and people theory says about pilot design</h3>
+<p><em>Established theory applied to the evidence above; the application is synthesis.</em></p>
+<ul>
+<li><strong>Sociotechnical systems (Tavistock, Trist &amp; Bamforth).</strong> New technology underperforms when the technical system is optimized and the social system is left alone; the gains come from <em>joint</em> optimization. This is the academic finding restated: gains track workflow redesign, not tool access. A pilot that only hands a team agents tests the wrong thing. Redesign roles, review flow and decision rights with it.</li>
+<li><strong>Conway&#39;s Law and the inverse Conway maneuver.</strong> Systems mirror the communication structure that builds them. A pod that owns a control end to end will produce a more cohesive control, but only if its boundary matches a real service boundary. Pick pilot scope along an existing architectural seam, or the pod inherits cross-team handoffs it can&#39;t remove.</li>
+<li><strong>Coordination cost and Brooks&#39;s Law.</strong> Communication paths grow as n(n−1)/2: 10 people have 45, 4 have 6. Small pods win mostly by cutting paths, not by typing faster. But agents add a new path type, human-to-agent supervision, which is why review load doubles. Count review as coordination cost when sizing the pod.</li>
+<li><strong>Mintzberg&#39;s coordination mechanisms.</strong> Large teams coordinate by direct supervision and standardized process; small autonomous ones by mutual adjustment. Agent work pushes toward <em>standardization of outputs</em>: specs, evals, policy-as-code. The pilot should invest in those artifacts; they are what let a 4-person pod coordinate with the rest of the org without a manager layer.</li>
+<li><strong>Galbraith&#39;s information-processing view.</strong> Structure exists to move information to where decisions are made. <abbr title="artificial intelligence" class="rep">AI</abbr> raises a team&#39;s processing capacity, so central approval becomes the bottleneck (Bain&#39;s 70% still deciding centrally). Give the pilot pod explicit decision rights in writing: what it can ship, approve and change without escalation, or you are measuring the old approval chain.</li>
+<li><strong>Cognitive load (Team Topologies).</strong> Each team has a finite load budget; Skelton maps agent context windows onto the same idea. A pod doing product, build, review, on-call and agent supervision can exceed it. Track load directly. Vella &amp; Blincoe saw worse developer experience nearly double while perceived productivity held.</li>
+<li><strong>Exploration vs. exploitation (March) and ambidexterity (O&#39;Reilly &amp; Tushman).</strong> Pilots are exploration, but published wins are exploitation of known work. Run the pilot as a protected unit with different metrics, then plan explicitly how practices integrate back; most failed pilots die at reintegration, not in the trial.</li>
+<li><strong>Hawthorne and selection effects.</strong> Volunteer teams under executive attention outperform for reasons unrelated to the intervention. Use a comparison pod, measure for a full quarter, and don&#39;t generalize from your most enthusiastic team.</li>
+<li><strong>Psychological safety (Edmondson).</strong> Pilots announced next to layoffs (Meta, Coinbase) teach people to hide problems and overstate wins. Separate the pilot from headcount decisions in communication and in fact, or the data will be optimistic.</li>
+<li><strong>Professional identity and role theory.</strong> Ulloa et al. found <abbr title="product manager" class="rep">PM</abbr> delegation to <abbr title="artificial intelligence" class="rep">AI</abbr> shaped by identity and accountability, not just capability. Changing titles (LinkedIn, Meta) is a lever, but people need to see what &quot;good&quot; looks like in the new role, so write it into the ladder before the pilot ends.</li>
+<li><strong>Situated learning (Lave &amp; Wenger).</strong> Juniors learn through legitimate peripheral participation in real work. When agents take the peripheral tasks, the on-ramp disappears (Ulfsnes et al.; the Canaries data). Put at least one early-career engineer in the pilot with an explicit learning plan.</li>
+<li><strong>Goodhart&#39;s Law.</strong> Uber ranked engineers on <abbr title="artificial intelligence" class="rep">AI</abbr>-usage leaderboards; Miller et al. describe the Productivity Pressure Paradox. Once a metric becomes a target it stops measuring. Don&#39;t make <abbr title="artificial intelligence" class="rep">AI</abbr> usage or <abbr title="pull request" class="rep">PR</abbr> count a pilot target.</li>
+<li><strong>Diffusion of innovations (Rogers).</strong> Adoption spreads through peer observability and trialability, which is why Skelton favors opt-in enabling teams over mandates. Plan for the pilot team to demo and pair with others, not just report up.</li>
+</ul>
+<h3 id="pilot-blueprint">Pilot blueprint</h3>
+<p><em>Synthesis for security engineering teams in regulated industries.</em></p>
+<ol>
+<li><strong>Pick scope on a seam.</strong> One or two security controls or platform features with known scope and a clean service boundary; a comparison pod on similar work without the new model.</li>
+<li><strong>Compose the pod.</strong> 3-4 people: a senior engineer who can own product decisions, one or two engineers, one early-career engineer with a learning plan; access to a product-minded lead and a risk partner.</li>
+<li><strong>Write decision rights down.</strong> What the pod ships and approves on its own; what needs a human gate (anything irreversible, anything touching regulated controls); who owns the outcome.</li>
+<li><strong>Build the harness first.</strong> Agent identities, scoped credentials, sandboxing, traceability from agent activity to change, <abbr title="artificial intelligence" class="rep">AI</abbr> first-pass review, policy-as-code.</li>
+<li><strong>Time-box to one quarter</strong> with a baseline: the original plan or estimate for the same work.</li>
+<li><strong>Set exit criteria up front</strong>, across four lenses:</li>
+</ol>
+<div class="table-wrap"><table><thead><tr><th scope="col">Lens</th><th scope="col">Measures</th></tr></thead><tbody><tr><td>Delivery</td><td>Lead time vs. baseline; features shipped</td></tr><tr><td>Quality and risk</td><td>Change failure rate, incidents per change, unreviewed-merge rate, traceability coverage</td></tr><tr><td>Coordination</td><td>Review latency, reviewer load, escalations to outside the pod</td></tr><tr><td>People</td><td>Cognitive load and developer-experience pulse; junior learning milestones; would the team keep working this way</td></tr></tbody></table></div>
+<ol start="7">
+<li><strong>Separate it from headcount.</strong> Say so explicitly, and mean it, so the data stays honest.</li>
+<li><strong>Plan reintegration.</strong> Decide in advance which outcomes trigger a second pod, which practices move into the platform, and what changes in the career ladder.</li>
+</ol>
+<h2 id="scarcity-relocates-to-judgment-verification-and-decision-rig">Scarcity relocates to judgment, verification and decision rights</h2>
+<p>The industry frames this period as code becoming free; the evidence reframes it as <strong>scarcity relocating</strong>: to deciding what to build, verifying what was built, and the decision rights and guardrails that let small teams act without central approval. That explains the contradictory moves: Uber caps <abbr title="artificial intelligence" class="rep">AI</abbr> spend while cutting managers, Meta flattens then rebuilds management, Anthropic gives everyone one title and hires more <abbr title="product managers" class="rep">PMs</abbr>. The &quot;product engineer&quot; is best read as a demand that every engineer hold some product and verification judgment, because handoffs are now the costliest part of the system.</p>
+<p>Two things remain unknown as of late 2026: no rigorous study shows solo or duo pods beating 5- to 8-person teams on real enterprise work, and no independent longitudinal data shows agentic-era delivery outcomes at the org level. Treat big-tech restructurings as experiments with visible side effects, not templates. The defensible bet is to invest where every source agrees the constraint now sits: verification capacity, deterministic guardrails and traceability, decision rights pushed to small owning teams, and a deliberately preserved junior pipeline.</p>
+<p>Notes: several big-tech details rest on headlines or secondhand podcast summaries and are labeled as such; vendor figures (Faros, GitClear, Qodo, <abbr title="developer experience" class="rep">DX</abbr>) are flagged inline.</p>
+<h2 id="how-this-was-made" class="annex">How this was made</h2>
+<p><strong>Question.</strong> How are <abbr title="artificial intelligence" class="rep">AI</abbr> coding agents changing software team structures, roles such as the product engineer, and management layers, and what follows for security engineering organizations? Set by Julie Davila in October 2026.</p>
+<p><strong>Process.</strong> <abbr title="artificial intelligence" class="rep">AI</abbr> research agents built on Anthropic Claude models searched company announcements, engineering blogs, press coverage, practitioner newsletters and labour-market reports, and a structured literature screen in Elicit included 20 academic papers from 2022 to 2026. The agents drafted the brief; Julie Davila reviewed it before publication.</p>
+<p><strong>What was checked and what was not.</strong> Several big-tech details rest on headlines or secondhand podcast summaries and are labelled as such inline. Vendor figures (Faros, GitClear, Qodo, <abbr title="developer experience" class="rep">DX</abbr>) are flagged where they appear. Passages marked <em>Synthesis</em> are reasoning from the evidence, not sourced findings. No adversarial review pass has been run on this version yet.</p>
+<h2 id="sources" class="annex">Sources</h2>
+<p>Every source linked in the text, in order of first use.</p>
+<div class="sources"><ol>
+<li>Business Insider via <abbr title="America Online" class="rep">AOL</abbr>. <a href="https://www.aol.com/articles/uber-cto-says-going-big-121842597.html"><code>aol.com/articles/uber-cto-says-going-big-121842597.html</code></a></li>
+<li>Benzinga via Yahoo Finance. <a href="https://finance.yahoo.com/sectors/technology/articles/ubers-anthropic-ai-push-hits-223109852.html"><code>finance.yahoo.com/sectors/technology/articles/ubers-anthropic-ai-push-hits-223109852.html</code></a></li>
+<li>Tech Times. <a href="https://www.techtimes.com/articles/317842/20260605/uber-cuts-23-hr-staff-new-president-denies-ai-role-95-engineers-use-it-daily.htm"><code>techtimes.com/articles/317842/20260605/uber-cuts-23-hr-staff-new-president-denies-ai-role-95-engineers-use-it-daily.htm</code></a></li>
+<li>Uber Engineering, Aug 2025. <a href="https://www.uber.com/us/en/blog/ureview/"><code>uber.com/us/en/blog/ureview</code></a></li>
+<li>TechCrunch. <a href="https://techcrunch.com/2026/09/02/uber-is-laying-off-10-of-staff-or-3300-people/"><code>techcrunch.com/2026/09/02/uber-is-laying-off-10-of-staff-or-3300-people</code></a></li>
+<li>Gizmodo. <a href="https://gizmodo.com/ai-or-overhiring-uber-targets-middle-management-with-10-cut-to-workforce-2000806239"><code>gizmodo.com/ai-or-overhiring-uber-targets-middle-management-with-10-cut-to-workforce-2000806239</code></a></li>
+<li><abbr title="Business Insider" class="rep">BI</abbr> via <abbr title="America Online" class="rep">AOL</abbr>. <a href="https://www.aol.com/articles/ubers-cto-embedded-top-ai-152402000.html"><code>aol.com/articles/ubers-cto-embedded-top-ai-152402000.html</code></a></li>
+<li>Pragmatic Engineer. <a href="https://blog.pragmaticengineer.com/the-pulse-meta-wanted-to-reduce-teams-by-60-because-of-ai/"><code>blog.pragmaticengineer.com/the-pulse-meta-wanted-to-reduce-teams-by-60-because-of-ai</code></a></li>
+<li>eWeek. <a href="https://www.eweek.com/news/meta-ai-performance-reviews/"><code>eweek.com/news/meta-ai-performance-reviews</code></a></li>
+<li>Fortune. <a href="https://fortune.com/2026/09/12/meta-year-of-efficiency-managers-ai-investment/"><code>fortune.com/2026/09/12/meta-year-of-efficiency-managers-ai-investment</code></a></li>
+<li><abbr title="Business Insider" class="rep">BI</abbr> via Yahoo Finance. <a href="https://finance.yahoo.com/technology/ai/articles/2-pizza-days-over-heres-095501046.html"><code>finance.yahoo.com/technology/ai/articles/2-pizza-days-over-heres-095501046.html</code></a></li>
+<li>All Things Distributed. <a href="https://www.allthingsdistributed.com/2026/06/return-to-two-pizza-culture.html"><code>allthingsdistributed.com/2026/06/return-to-two-pizza-culture.html</code></a></li>
+<li>GeekWire. <a href="https://www.geekwire.com/2026/how-agentic-ai-is-rewiring-amazons-teams-and-upending-its-traditions/"><code>geekwire.com/2026/how-agentic-ai-is-rewiring-amazons-teams-and-upending-its-traditions</code></a></li>
+<li><abbr title="National Broadcasting Company" class="rep">NBC</abbr> News. <a href="https://www.nbcnews.com/business/business-news/google-eliminated-35-percent-managers-overseeing-small-teams-exec-says-rcna227486"><code>nbcnews.com/business/business-news/google-eliminated-35-percent-managers-overseeing-small-teams-exec-says-rcna227486</code></a></li>
+<li>MacRumors. <a href="https://www.macrumors.com/2026/04/15/siri-engineers-ai-coding-bootcamp/"><code>macrumors.com/2026/04/15/siri-engineers-ai-coding-bootcamp</code></a></li>
+<li>Fast Company. <a href="https://www.fastcompany.com/91537137/read-the-email-coinbase-ceo-brian-armstrong-sent-when-he-laid-off-14-of-his-staff"><code>fastcompany.com/91537137/read-the-email-coinbase-ceo-brian-armstrong-sent-when-he-laid-off-14-of-his-staff</code></a></li>
+<li>Semafor. <a href="https://www.semafor.com/article/02/27/2026/jack-dorseys-block-to-slash-staff-by-40-over-ai-progress"><code>semafor.com/article/02/27/2026/jack-dorseys-block-to-slash-staff-by-40-over-ai-progress</code></a></li>
+<li>Outlook Business. <a href="https://www.outlookbusiness.com/corporate/300-mn-on-anthropic-zero-on-engineers-inside-salesforces-ai-pivot"><code>outlookbusiness.com/corporate/300-mn-on-anthropic-zero-on-engineers-inside-salesforces-ai-pivot</code></a></li>
+<li>Forbes. <a href="https://www.forbes.com/sites/maryroeloffs/2026/05/07/ceos-say-layoffs-are-ais-fault-but-some-experts-think-companies-are-lying/"><code>forbes.com/sites/maryroeloffs/2026/05/07/ceos-say-layoffs-are-ais-fault-but-some-experts-think-companies-are-lying</code></a></li>
+<li>Semafor. <a href="https://www.semafor.com/article/04/24/2026/google-ceo-says-75-of-companys-new-code-is-ai-generated"><code>semafor.com/article/04/24/2026/google-ceo-says-75-of-companys-new-code-is-ai-generated</code></a></li>
+<li>TechCrunch. <a href="https://techcrunch.com/2026/05/08/airbnb-says-ai-now-writes-60-of-its-new-code/"><code>techcrunch.com/2026/05/08/airbnb-says-ai-now-writes-60-of-its-new-code</code></a></li>
+<li><abbr title="developer experience" class="rep">DX</abbr>. <a href="https://getdx.com/report/ai-assisted-engineering-q4-impact-report/"><code>getdx.com/report/ai-assisted-engineering-q4-impact-report</code></a></li>
+<li>leerob.com. <a href="https://leerob.com/product-engineers"><code>leerob.com/product-engineers</code></a></li>
+<li>PostHog careers. <a href="https://posthog.com/careers/product-engineer"><code>posthog.com/careers/product-engineer</code></a></li>
+<li>handbook. <a href="https://posthog.com/handbook/product/product-manager-role.md"><code>posthog.com/handbook/product/product-manager-role.md</code></a></li>
+<li>PostHog newsletter, Dec 2024. <a href="https://newsletter.posthog.com/p/product-management-is-broken-engineers"><code>newsletter.posthog.com/p/product-management-is-broken-engineers</code></a></li>
+<li>Linear careers. <a href="https://linear.app/careers/b4a7764e-c680-4bdf-9956-dc78f2ca94d5"><code>linear.app/careers/b4a7764e-c680-4bdf-9956-dc78f2ca94d5</code></a></li>
+<li>Pragmatic Engineer, Jan 2026. <a href="https://newsletter.pragmaticengineer.com/p/when-ai-writes-almost-all-code-what"><code>newsletter.pragmaticengineer.com/p/when-ai-writes-almost-all-code-what</code></a></li>
+<li><abbr title="Business Insider" class="rep">BI</abbr> via <abbr title="America Online" class="rep">AOL</abbr>. <a href="https://www.aol.com/articles/linkedin-scrapping-associate-product-manager-063508038.html"><code>aol.com/articles/linkedin-scrapping-associate-product-manager-063508038.html</code></a></li>
+<li>pearpages, Aug 2026. <a href="https://pearpages.com/blog/2026/08/10/linkedins-full-stack-builder-what-actually-got-merged"><code>pearpages.com/blog/2026/08/10/linkedins-full-stack-builder-what-actually-got-merged</code></a></li>
+<li>The Decoder. <a href="https://the-decoder.com/meta-tests-new-way-of-working-with-ai-native-pods-to-boost-productivity/"><code>the-decoder.com/meta-tests-new-way-of-working-with-ai-native-pods-to-boost-productivity</code></a></li>
+<li>Roger Wong, Feb 2026. <a href="https://rogerwong.me/2026/02/what-happens-after-coding-is-solved-boris-cherny"><code>rogerwong.me/2026/02/what-happens-after-coding-is-solved-boris-cherny</code></a></li>
+<li>Lenny's thread, Apr 2026. <a href="https://threadreaderapp.com/thread/2041166073794592926.html"><code>threadreaderapp.com/thread/2041166073794592926.html</code></a></li>
+<li><abbr title="Silicon Valley Product Group" class="rep">SVPG</abbr>. <a href="https://www.svpg.com/ai-resource-guide/"><code>svpg.com/ai-resource-guide</code></a></li>
+<li>HackerNoon. <a href="https://hackernoon.com/andrew-ng-product-team-ratios-evolving-to-just-one-software-developer-for-every-two-product-manager"><code>hackernoon.com/andrew-ng-product-team-ratios-evolving-to-just-one-software-developer-for-every-two-product-manager</code></a></li>
+<li>The Batch #349. <a href="https://www.deeplearning.ai/the-batch/issue-349/"><code>deeplearning.ai/the-batch/issue-349</code></a></li>
+<li>simonwillison.net. <a href="https://simonwillison.net/2026/Apr/2/lennys-podcast/"><code>simonwillison.net/2026/Apr/2/lennys-podcast</code></a></li>
+<li>summary. <a href="https://completeaitraining.com/news/evals-replace-prds-as-core-tool-for-ai-product-managers/"><code>completeaitraining.com/news/evals-replace-prds-as-core-tool-for-ai-product-managers</code></a></li>
+<li>Fin Ideas. <a href="https://ideas.fin.ai/p/2"><code>ideas.fin.ai/p/2</code></a></li>
+<li>BuildBetter. <a href="https://blog.buildbetter.ai/ramp-ai-product-factory-internal-tools/"><code>blog.buildbetter.ai/ramp-ai-product-factory-internal-tools</code></a></li>
+<li>X. <a href="https://x.com/lennysan/status/2036483059407810640"><code>x.com/lennysan/status/2036483059407810640</code></a></li>
+<li>Forbes. <a href="https://www.forbes.com/sites/larryenglish/2026/07/30/ai-is-rewriting-the-rules-of-product-development/"><code>forbes.com/sites/larryenglish/2026/07/30/ai-is-rewriting-the-rules-of-product-development</code></a></li>
+<li><abbr title="Model Evaluation and Threat Research" class="rep">METR</abbr> follow-up, Feb 2026. <a href="https://metr.org/blog/2026-02-24-uplift-update/"><code>metr.org/blog/2026-02-24-uplift-update</code></a></li>
+<li>Faros <abbr title="artificial intelligence" class="rep">AI</abbr>, 2026. <a href="https://www.faros.ai/blog/ai-acceleration-whiplash-takeaways"><code>faros.ai/blog/ai-acceleration-whiplash-takeaways</code></a></li>
+<li><abbr title="DevOps Research and Assessment" class="rep">DORA</abbr> 2025. <a href="https://dora.dev/insights/dora-2025-year-in-review/"><code>dora.dev/insights/dora-2025-year-in-review</code></a></li>
+<li>Stanford, Denisov-Blanch. <a href="https://www.sirris.be/en/inspiration/how-much-more-productive-does-ai-make-developers"><code>sirris.be/en/inspiration/how-much-more-productive-does-ai-make-developers</code></a></li>
+<li><abbr title="Model Evaluation and Threat Research" class="rep">METR</abbr>, Jul 2025. <a href="https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/"><code>metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study</code></a></li>
+<li>GitClear. <a href="https://devclass.com/2025/02/20/ai-is-eroding-code-quality-states-new-in-depth-report/"><code>devclass.com/2025/02/20/ai-is-eroding-code-quality-states-new-in-depth-report</code></a></li>
+<li>Google <abbr title="randomized controlled trial" class="rep">RCT</abbr>. <a href="https://arxiv.org/abs/2410.12944"><code>arxiv.org/abs/2410.12944</code></a></li>
+<li>Cui, Demirer et al. <a href="https://economics.mit.edu/sites/default/files/inline-files/draft_copilot_experiments.pdf"><code>economics.mit.edu/sites/default/files/inline-files/draft_copilot_experiments.pdf</code></a></li>
+<li><abbr title="DevOps Research and Assessment" class="rep">DORA</abbr> 2024. <a href="https://cloud.google.com/blog/products/devops-sre/announcing-the-2024-dora-report"><code>cloud.google.com/blog/products/devops-sre/announcing-the-2024-dora-report</code></a></li>
+<li>RedMonk. <a href="https://redmonk.com/rstephens/2025/12/18/dora2025/"><code>redmonk.com/rstephens/2025/12/18/dora2025</code></a></li>
+<li>Qodo. <a href="https://www.qodo.ai/blog/state-of-ai-code-quality-report-2026/"><code>qodo.ai/blog/state-of-ai-code-quality-report-2026</code></a></li>
+<li>via Simon Willison. <a href="https://simonwillison.net/2026/Jun/17/charity-majors/"><code>simonwillison.net/2026/Jun/17/charity-majors</code></a></li>
+<li><abbr title="National Bureau of Economic Research" class="rep">NBER</abbr> w33641. <a href="https://www.nber.org/papers/w33641"><code>nber.org/papers/w33641</code></a></li>
+<li>CESifo <abbr title="working paper" class="rep">WP</abbr> 11479. <a href="https://ideas.repec.org/p/ces/ceswps/_11479.html"><code>ideas.repec.org/p/ces/ceswps/_11479.html</code></a></li>
+<li>Stanford <abbr title="Digital Economy Lab" class="rep">DEL</abbr>. <a href="https://digitaleconomy.stanford.edu/publication/canaries-in-the-coal-mine-six-facts-about-the-recent-employment-effects-of-artificial-intelligence/"><code>digitaleconomy.stanford.edu/publication/canaries-in-the-coal-mine-six-facts-about-the-recent-employment-effects-of-artificial-intelligence</code></a></li>
+<li><abbr title="Social Science Research Network" class="rep">SSRN</abbr> 5425555. <a href="https://www.alejandrobarros.com/wp-content/uploads/2025/11/ssrn-5425555.pdf"><code>alejandrobarros.com/wp-content/uploads/2025/11/ssrn-5425555.pdf</code></a></li>
+<li>Indeed Hiring Lab, Jul 2026. <a href="https://hiringlab.indeed.com/2026/07/08/ai-and-job-postings-from-destruction-to-creation/"><code>hiringlab.indeed.com/2026/07/08/ai-and-job-postings-from-destruction-to-creation</code></a></li>
+<li>Bain, Sep 2026. <a href="https://www.bain.com/insights/the-half-finished-redesign-how-ai-reshapes-software-organizations-technology-report-2026/"><code>bain.com/insights/the-half-finished-redesign-how-ai-reshapes-software-organizations-technology-report-2026</code></a></li>
+<li>Pragmatic Engineer, Oct 2026. <a href="https://newsletter.pragmaticengineer.com/p/the-revised-rules-of-engineering"><code>newsletter.pragmaticengineer.com/p/the-revised-rules-of-engineering</code></a></li>
+<li>People Matters recap. <a href="https://www.peoplematters.in/news/ai-and-emerging-tech/60percent-of-organisations-to-adopt-smaller-software-engineering-teams-by-2029-gartner-50748"><code>peoplematters.in/news/ai-and-emerging-tech/60percent-of-organisations-to-adopt-smaller-software-engineering-teams-by-2029-gartner-50748</code></a></li>
+<li>McKinsey, Jul 2026. <a href="https://www.mckinsey.com/capabilities/tech-and-ai/our-insights/tech-forward/ai-native-development-rethinking-software-from-the-ground-up"><code>mckinsey.com/capabilities/tech-and-ai/our-insights/tech-forward/ai-native-development-rethinking-software-from-the-ground-up</code></a></li>
+<li>InfoQ, Mar 2026. <a href="https://infoq.com/news/2026/03/ai-agency-team-topologies"><code>infoq.com/news/2026/03/ai-agency-team-topologies</code></a></li>
+<li>summary. <a href="https://github.com/MLOpsEngineer/harness-engineering/blob/main/docs/blogs/2026-03-04-martinfowler-humans-and-agents-in-software-engineering-loops.md"><code>github.com/MLOpsEngineer/harness-engineering/blob/main/docs/blogs/2026-03-04-martinfowler-humans-and-agents-in-software-engineering-loops.md</code></a></li>
+<li><abbr title="pull request" class="rep">PR</abbr> Newswire. <a href="https://www.prnewswire.com/news-releases/as-ai-accelerates-software-complexity-thoughtworks-technology-radar-urges-a-return-to-engineering-fundamentals-to-combat-cognitive-debt-302737210.html"><code>prnewswire.com/news-releases/as-ai-accelerates-software-complexity-thoughtworks-technology-radar-urges-a-return-to-engineering-fundamentals-to-combat-cognitive-debt-302737210.html</code></a></li>
+<li>GitGuardian recap. <a href="https://blog.gitguardian.com/san-francisco-secure-software-and-appsec-summit-2026/"><code>blog.gitguardian.com/san-francisco-secure-software-and-appsec-summit-2026</code></a></li>
+<li>Wulveryck, Jun 2026. <a href="https://blog.owulveryck.info/2026/06/24/who-does-what-team-topologies-for-the-agentic-platform.html"><code>blog.owulveryck.info/2026/06/24/who-does-what-team-topologies-for-the-agentic-platform.html</code></a></li>
+</ol></div>
+
+<hr class="mark">
+<p class="table-note">Julie Davila · Research. Researched with <abbr title="artificial intelligence" class="rep">AI</abbr> agents and reviewed by Julie Davila: <a href="../about/">how this research is made</a>. Text licensed <a href="https://creativecommons.org/licenses/by/4.0/"><abbr title="Creative Commons">CC</abbr> <abbr title="Attribution">BY</abbr> 4.0</a>. Source on <a href="https://github.com/juliedavila/research">GitHub</a>.</p>
+</div>
+</div>
+</main>
+</div>
+
+<dialog class="zoom" id="zoom" aria-label="Enlarged figure"><div class="zoom-bar"><button type="button" data-z="-1" aria-label="Zoom out">−</button><button type="button" data-z="0" aria-label="Fit to window">Fit</button><button type="button" data-z="1" aria-label="Zoom in">+</button><span id="zoom-level" class="muted">100%</span><span class="spacer"></span><button type="button" data-close>Close</button></div><div class="zoom-stage" id="zoom-stage"></div></dialog>
+
+<script>
+(() => {
+  const root = document.documentElement, K = "hs:" + location.pathname + ":";
+  const store = { set: (k, v) => { try { v ? localStorage.setItem(K + k, v) : localStorage.removeItem(K + k); } catch {} } };
+
+  // Palette and theme. Remembered for this page only. Theme cycles auto, light, dark.
+  const palBtns = [...document.querySelectorAll("[data-set-palette]")], themeBtn = document.querySelector("[data-toggle-theme]");
+  const showPal = () => palBtns.forEach(b => b.setAttribute("aria-pressed", b.dataset.setPalette === (root.dataset.palette || "paper")));
+  const showTheme = () => { if (themeBtn) themeBtn.textContent = "Theme: " + (root.dataset.theme || "auto"); };
+  palBtns.forEach(b => b.onclick = () => { root.dataset.palette = b.dataset.setPalette; store.set("palette", b.dataset.setPalette); showPal(); });
+  if (themeBtn) themeBtn.onclick = () => { const next = { auto: "light", light: "dark", dark: "" }[root.dataset.theme || "auto"];
+    if (next) root.dataset.theme = next; else delete root.dataset.theme; store.set("theme", next); showTheme(); };
+  showPal(); showTheme();
+
+  // Contents rail. The list is in the HTML; this marks the current section and
+  // fills the list only if it was left empty. Collapsed by default on narrow screens.
+  const toc = document.querySelector(".toc"), list = toc && toc.querySelector("ol");
+  const heads = [...document.querySelectorAll("main h2")];
+  if (toc && list) {
+    heads.forEach((h, i) => { if (!h.id) h.id = (h.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "section") + "-" + i; });
+    if (!list.children.length) heads.forEach(h => { const li = document.createElement("li"), a = document.createElement("a"); a.href = "#" + h.id; a.textContent = h.textContent; li.append(a); list.append(li); });
+    if (!list.children.length) toc.hidden = true;
+    const box = toc.querySelector("details"), wide = matchMedia("(min-width: 1100px)");
+    if (box) { box.open = wide.matches; wide.addEventListener("change", e => { box.open = e.matches; }); }
+    const links = [...list.querySelectorAll("a")];
+    const mark = () => { let cur = heads[0]; for (const h of heads) if (h.getBoundingClientRect().top <= innerHeight * 0.3) cur = h;
+      if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) cur = heads[heads.length - 1];
+      links.forEach(a => a.getAttribute("href") === "#" + (cur && cur.id) ? a.setAttribute("aria-current", "location") : a.removeAttribute("aria-current")); };
+    let raf = 0; addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(mark); }, { passive: true }); mark();
+  }
+
+  // Enlarge any figure: fit to the window on open, real zoom, real scroll.
+  const dlg = document.getElementById("zoom"), stage = document.getElementById("zoom-stage"), lvl = document.getElementById("zoom-level");
+  let z = 1, w = 0, h = 0;
+  const fit = () => { const s = getComputedStyle(stage);
+    return Math.min((stage.clientWidth - parseFloat(s.paddingLeft) - parseFloat(s.paddingRight)) / w, (stage.clientHeight - parseFloat(s.paddingTop) - parseFloat(s.paddingBottom)) / h); };
+  const apply = () => { const el = stage.firstElementChild; if (!el) return; el.style.width = w * z + "px"; el.style.height = h * z + "px"; lvl.textContent = Math.round(z * 100) + "%"; };
+  document.querySelectorAll(".zoom-btn").forEach(b => b.onclick = () => {
+    const src = b.closest("figure") && b.closest("figure").querySelector(".figure-frame > svg, .figure-frame > img, .figure-frame > picture img");
+    if (!src || !dlg) return;
+    const vb = src.viewBox && src.viewBox.baseVal, r = src.getBoundingClientRect();
+    [w, h] = vb && vb.width ? [vb.width, vb.height] : src.naturalWidth ? [src.naturalWidth, src.naturalHeight] : [r.width, r.height];
+    if (!w || !h) return;
+    const c = src.cloneNode(true), name = src.querySelector("title");
+    c.removeAttribute("id"); c.querySelectorAll("[id]").forEach(e => e.removeAttribute("id"));
+    c.removeAttribute("aria-labelledby"); c.setAttribute("aria-label", name ? name.textContent : (src.alt || "Enlarged figure"));
+    stage.replaceChildren(c); dlg.showModal(); z = Math.min(fit(), 4); apply(); stage.scrollTo(0, 0);
+  });
+  if (dlg) {
+    dlg.querySelectorAll("[data-z]").forEach(b => b.onclick = () => { const d = +b.dataset.z; z = d === 0 ? fit() : Math.min(6, Math.max(0.25, z * (d > 0 ? 1.25 : 0.8))); apply(); });
+    dlg.querySelector("[data-close]").addEventListener("click", () => dlg.close());
+    dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+  }
+
+  // Tabs: one tab stop, arrow keys, Home and End. Panels are visible until this runs.
+  document.querySelectorAll(".tabs").forEach(t => { const tabs = [...t.querySelectorAll('[role="tab"]')];
+    const sel = tab => tabs.forEach(x => { const on = x === tab; x.setAttribute("aria-selected", on); x.tabIndex = on ? 0 : -1;
+      const p = document.getElementById(x.getAttribute("aria-controls")); if (p) p.hidden = !on; });
+    tabs.forEach((tab, i) => { tab.onclick = () => sel(tab); tab.onkeydown = e => { const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (e.key === "Home" || e.key === "End" || d) { e.preventDefault(); const n = e.key === "Home" ? tabs[0] : e.key === "End" ? tabs[tabs.length - 1] : tabs[(i + d + tabs.length) % tabs.length]; sel(n); n.focus(); } }; });
+    sel(tabs.find(x => x.getAttribute("aria-selected") === "true") || tabs[0]); });
+
+  // Page patterns (PATTERNS.md). Each block does nothing on a page without its markup.
+
+  // Page state: filters, sort and chart picks (PATTERNS.md section 9). The hash
+  // holds it as #key=value&key=value. A change pushes history, so Back undoes it.
+  // An in-page link keeps the state and adds at=<id>; a hash with no "=" is a
+  // plain anchor. A view is a [data-view] element, or the whole page.
+  const views = [...document.querySelectorAll("[data-view]")];
+  if (!views.length && document.querySelector(".filter, button.sort, [data-filter-item]")) views.push(document.body);
+  const viewOf = el => el.closest("[data-view]") || document.body;
+  const read = () => new URLSearchParams(location.hash.includes("=") ? location.hash.slice(1) : "");
+  const coll = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+  const num = x => { const t = x.replace(/[,\s%$]/g, ""); return t !== "" && isFinite(t) ? +t : NaN; }; // "4,210" and "61%" sort as numbers
+  const cmp = (a, b) => { const x = num(a), y = num(b); return isNaN(x) || isNaN(y) ? coll.compare(a, b) : x - y; };
+  const model = views.map(v => {
+    const mine = sel => [...v.querySelectorAll(sel)].filter(el => viewOf(el) === v);
+    const q = mine('input[type="search"]')[0], picks = mine("[data-key][data-value]");
+    return { v, q, qk: q ? q.dataset.key || "q" : "", picks, keys: [...new Set(picks.map(b => b.dataset.key))], items: mine("[data-filter-item]"),
+      groups: mine("[data-filter-group]"), tables: mine("table").filter(t => t.querySelector("th > button.sort")), said: mine(".filter-sentence"),
+      empty: mine(".filter-empty")[0], noun: v.dataset.noun || "items" };
+  });
+  const sortTable = (t, val) => {
+    const ths = [...t.tHead.rows[0].cells], body = t.tBodies[0], rows = [...body.rows];
+    ths.forEach((th, i) => { th.dataset.col = th.dataset.col || "c" + i; });
+    rows.forEach((r, i) => { if (!r.dataset.i) r.dataset.i = i; });
+    const [col, dir] = (val || "").split(/\.(?=[^.]*$)/), ix = ths.findIndex(th => th.dataset.col === col);
+    ths.forEach((th, i) => { if (th.querySelector("button.sort")) th.setAttribute("aria-sort", i === ix ? (dir === "desc" ? "descending" : "ascending") : "none"); });
+    const key = r => { const c = r.cells[ix]; return c ? (c.dataset.sort ?? c.textContent.trim()) : ""; };
+    rows.sort((a, b) => (ix < 0 ? 0 : cmp(key(a), key(b)) * (dir === "desc" ? -1 : 1)) || a.dataset.i - b.dataset.i);
+    body.append(...rows);
+  };
+  const render = () => { const p = read();
+    for (const m of model) {
+      const q = m.qk ? (p.get(m.qk) || "").trim().toLowerCase() : "";
+      if (m.q && document.activeElement !== m.q) m.q.value = p.get(m.qk) || "";
+      const ok = (el, skip) => (!q || el.textContent.toLowerCase().includes(q)) && m.keys.every(k => k === skip || !p.get(k) || el.dataset[k] === p.get(k));
+      let n = 0; m.items.forEach(el => { el.hidden = !ok(el); if (!el.hidden) n++; });
+      m.groups.forEach(g => { g.hidden = !g.querySelector("[data-filter-item]:not([hidden])"); });
+      m.picks.forEach(b => { b.setAttribute("aria-pressed", (p.get(b.dataset.key) || "") === b.dataset.value);
+        // A chart bar counts the records under every filter except its own, so the bars stay a way to switch.
+        const c = b.querySelector("[data-count]"), bar = b.querySelector("[data-unit]"); if (!c) return;
+        const k = m.items.filter(el => el.dataset[b.dataset.key] === b.dataset.value && ok(el, b.dataset.key)).length;
+        c.textContent = k; if (bar) { bar.setAttribute("width", k * bar.dataset.unit); c.setAttribute("x", +bar.getAttribute("x") + k * bar.dataset.unit + 6); } });
+      m.tables.forEach(t => sortTable(t, p.get(t.dataset.sortKey || "sort")));
+      if (m.empty) m.empty.hidden = n > 0 || !m.items.length;
+      const used = (q ? ['matching "' + q + '"'] : []).concat(m.keys.filter(k => p.get(k)).map(k => {
+        const b = m.picks.find(x => x.dataset.key === k && x.dataset.value === p.get(k)); return b ? b.dataset.say || b.dataset.label || b.textContent.trim() : p.get(k); }));
+      m.said.forEach(s => { s.textContent = used.length ? n + " of " + m.items.length + " " + m.noun + ": " + used.join(", ") : "All " + m.items.length + " " + m.noun; });
+    } };
+  const go = (p, push) => { p.delete("at"); const h = p.toString(); history[push ? "pushState" : "replaceState"](null, "", h ? "#" + h : location.pathname + location.search); render(); };
+  // A deep link to an item the filter hides clears that view's filter and shows it.
+  const reveal = () => { const h = location.hash.slice(1), id = h.includes("=") ? read().get("at") : decodeURIComponent(h), el = id && document.getElementById(id);
+    if (!el) return;
+    if (el.closest("[hidden]")) { const m = model.find(x => x.v === viewOf(el)) || model[0], p = read(); [m.qk, ...m.keys].forEach(k => p.delete(k));
+      p.set("at", id); history.replaceState(null, "", "#" + p); render(); }
+    document.querySelectorAll("[data-at]").forEach(x => x.removeAttribute("data-at")); el.setAttribute("data-at", "");
+    if (h.includes("=")) el.scrollIntoView({ block: "start" }); };
+  if (model.length) {
+    let typed = 0;
+    model.forEach(m => {
+      if (m.q) m.q.addEventListener("input", () => { const p = read(), v = m.q.value.trim(); if (v) p.set(m.qk, v); else p.delete(m.qk);
+        go(p, Date.now() - typed > 1000); typed = Date.now(); }); // one history entry per pause in typing, not per key
+      m.picks.forEach(b => { const pick = () => { const p = read(), on = (p.get(b.dataset.key) || "") === b.dataset.value;
+          if (b.dataset.value && !(on && b.closest("svg"))) p.set(b.dataset.key, b.dataset.value); else p.delete(b.dataset.key); go(p, true); };
+        b.addEventListener("click", pick);
+        if (b.closest("svg")) b.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } }); });
+      m.tables.forEach(t => t.querySelectorAll("th > button.sort").forEach(btn => btn.addEventListener("click", () => {
+        const th = btn.parentElement, p = read(), k = t.dataset.sortKey || "sort";
+        p.set(k, th.dataset.col + (th.getAttribute("aria-sort") === "ascending" ? ".desc" : ".asc")); go(p, true); })));
+    });
+    // In-page links keep the state: #at=finding-3&sev=high.
+    document.addEventListener("click", e => { const a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (!a || !location.hash.includes("=")) return;
+      const id = decodeURIComponent(a.getAttribute("href").slice(1)); if (!id || id.includes("=") || !document.getElementById(id)) return;
+      e.preventDefault(); const p = read(); p.set("at", id); history.pushState(null, "", "#" + p); render(); reveal(); }, true);
+    addEventListener("popstate", () => { render(); reveal(); }); addEventListener("hashchange", () => { render(); reveal(); });
+    render(); reveal();
+  }
+
+  // Step progress: ticks are kept in localStorage for this page, with the time
+  // the run started, until the reader resets them. A tick never hides a step.
+  const ticks = [...document.querySelectorAll("ol.steps.do > li > .step-check input")];
+  if (ticks.length) {
+    const key = K + "run", say = document.querySelector(".progress-text"), jump = document.querySelector(".progress-jump");
+    let run = {}; try { run = JSON.parse(localStorage.getItem(key)) || {}; } catch {}
+    const save = () => { try { run.started ? localStorage.setItem(key, JSON.stringify(run)) : localStorage.removeItem(key); } catch {} };
+    const update = () => { const next = ticks.find(t => !t.checked), n = ticks.filter(t => t.checked).length;
+      if (say) say.textContent = (next ? "Next: step " + (ticks.indexOf(next) + 1) + " of " + ticks.length : "All " + ticks.length + " steps ticked")
+        + (run.started ? ". " + n + " done in the run started " + new Date(run.started).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) + "." : ".");
+      if (jump) { jump.hidden = !next; if (next) jump.href = "#" + next.closest("li").id; } };
+    ticks.forEach(t => { t.checked = (run.done || []).includes(t.closest("li").id);
+      t.addEventListener("change", () => { if (!run.started) run.started = Date.now(); run.done = ticks.filter(x => x.checked).map(x => x.closest("li").id); save(); update(); }); });
+    const reset = document.querySelector("[data-reset-steps]");
+    if (reset) reset.addEventListener("click", () => { run = {}; save(); ticks.forEach(t => { t.checked = false; }); update(); });
+    update();
+  }
+
+  // Returning reader (Monitor): a digest of what the reader last saw is kept for
+  // this page. On return, a dismissible panel lists what changed. Silent when
+  // storage is unavailable.
+  const since = document.querySelector(".since");
+  if (since) {
+    const key = K + "seen", now = {};
+    document.querySelectorAll("[data-digest]").forEach(el => { const s = el.querySelector(".status"); now[el.dataset.digest] = s ? s.textContent.trim() : el.dataset.status || ""; });
+    let was = null; try { was = JSON.parse(localStorage.getItem(key)); } catch {}
+    const save = () => { try { localStorage.setItem(key, JSON.stringify(now)); } catch {} };
+    const ids = was ? [...new Set([...Object.keys(now), ...Object.keys(was)])].filter(id => was[id] !== now[id]) : [];
+    if (ids.length) {
+      since.querySelector(".since-count").textContent = "Changed since your last visit: " + ids.length + (ids.length === 1 ? " item" : " items");
+      const list = since.querySelector("ul");
+      ids.slice(0, 8).forEach(id => { const li = document.createElement("li"); li.textContent = id + ": " + (!(id in was) ? "new, " + now[id] : !(id in now) ? "removed" : "was " + was[id] + ", now " + now[id]); list.append(li); });
+      if (ids.length > 8) { const li = document.createElement("li"); li.textContent = "and " + (ids.length - 8) + " more"; list.append(li); }
+      since.hidden = false;
+    }
+    const dismiss = since.querySelector("[data-dismiss]");
+    if (dismiss) dismiss.addEventListener("click", () => { since.hidden = true; save(); });
+    addEventListener("pagehide", save);
+  }
+
+  // Save as PDF: the browser's own print. A button with data-progress keeps the
+  // ticks on paper; any other print shows empty boxes.
+  document.querySelectorAll(".print-btn").forEach(b => b.addEventListener("click", () => { root.classList.toggle("print-progress", "progress" in b.dataset); window.print(); }));
+  addEventListener("afterprint", () => root.classList.remove("print-progress"));
+
+  // Print everything: open collapsed sections first.
+  addEventListener("beforeprint", () => document.querySelectorAll("details").forEach(d => { d.dataset.wasOpen = d.open; d.open = true; }));
+  addEventListener("afterprint", () => document.querySelectorAll("details").forEach(d => { d.open = d.dataset.wasOpen === "true"; }));
+})();
+</script>
+</body>
+</html>

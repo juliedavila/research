@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="en" class="no-js" data-palette="paper">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shared Build Cache</title>
+<!-- In generated pages, replace this link with the full contents of base.css in a <style> tag. -->
+<link rel="stylesheet" href="base.css">
+<script>
+/* Before first paint: script is on, and the reader's saved theme for this page applies. */
+(() => { const r = document.documentElement, k = "hs:" + location.pathname + ":"; r.classList.remove("no-js");
+  try { const t = localStorage.getItem(k + "theme"), p = localStorage.getItem(k + "palette");
+    if (t && !r.hasAttribute("data-theme")) r.dataset.theme = t;
+    if (p && !r.hasAttribute("data-palette-locked")) r.dataset.palette = p; } catch {} })();
+</script>
+</head>
+<body class="doc" data-pattern="decide">
+<div class="page">
+
+  <header class="masthead">
+    <!-- Palette and theme switches: keep only for tools the reader will live in. Keep the
+         Save as PDF button on Decide, Review and Do pages (PATTERNS.md, "Print and PDF"). -->
+    <div class="toolbar no-print">
+      <button type="button" data-set-palette="paper">Paper</button>
+      <button type="button" data-set-palette="slate">Slate</button>
+      <button type="button" data-set-palette="graphite">Graphite</button>
+      <button type="button" data-toggle-theme>Theme: auto</button>
+      <button type="button" class="print-btn">Save as PDF</button>
+    </div>
+    <div class="kicker">Decision brief · Platform engineering</div>
+    <h1>Move every team to one shared build cache this quarter</h1>
+    <p class="dek">A shared cache should cut median continuous integration (CI) time by about a third, based on September's cold-start rate. It costs one platform engineer for six weeks, and we can reverse it in a day.</p>
+    <div class="meta"><span>Draft 3</span><span>Updated 22 Oct 2026</span><span>7 min read</span></div>
+  </header>
+
+  <main>
+    <div class="with-toc">
+      <section class="bluf">
+        <span class="label">Bottom line</span>
+        <p>Approve phase 1: put the four largest repositories on the shared cache by 30 November, then decide on the rest from measured results.</p>
+        <ul>
+          <li><strong>Why now:</strong> queue time grew 2.1 times between July and October (runner metrics), and CI is now the slowest step to production.</li>
+          <li><strong>Cost:</strong> one engineer for six weeks, plus about $1,400 a month for storage and compute (cloud price sheet, Oct 2026).</li>
+          <li><strong>Stop if:</strong> the <span class="term" tabindex="0" data-def="The share of build steps served from the cache instead of run again.">cache hit rate</span> stays under 60% after two weeks, or any build turns red because of a stale artifact.</li>
+        </ul>
+      </section>
+
+      <nav class="toc" aria-label="Contents">
+        <details open>
+          <summary>Contents</summary>
+          <ol>
+            <li><a href="#situation">CI is now the slowest step between merge and deploy</a></li>
+            <li><a href="#design">One cache service sits between runners and storage</a></li>
+            <li><a href="#options">A shared service beats bigger runners on hit rate and cost</a></li>
+            <li><a href="#plan">Phase 1 runs six weeks, in three steps</a></li>
+            <li class="annex-start"><a href="#detail">Detail</a></li>
+            <li><a href="#gallery">Component gallery</a></li>
+            <li><a href="#glossary">Glossary</a></li>
+            <li><a href="#sources">Sources</a></li>
+          </ol>
+        </details>
+      </nav>
+
+      <div class="prose">
+        <h2 id="situation">CI is now the slowest step between merge and deploy</h2>
+        <p>Each team runs its own cache on its own runners. A <span class="term" tabindex="0" data-def="A runner that starts with an empty local cache, so it rebuilds everything.">cold runner</span> rebuilds everything, and about half of all runs start cold.<sup class="fn"><a href="#fn1" id="fnref1">1</a></sup> The numbers below come from the CI analytics export for September.</p>
+
+        <div class="stats">
+          <div class="stat"><div class="value">18.4 min</div><div class="what">Median pipeline time</div><div class="src">CI export, Sep 2026</div></div>
+          <div class="stat"><div class="value">52%</div><div class="what">Runs that start with a cold cache</div><div class="src">CI export, Sep 2026</div></div>
+          <div class="stat"><div class="value">2.1×</div><div class="what">Queue time growth since July</div><div class="src">Runner metrics, Jul to Oct 2026</div></div>
+          <div class="stat"><div class="value"><span class="status warn">At risk</span></div><div class="what">Fourth-quarter deploy-frequency goal</div><div class="src">Platform goals tracker, Oct 2026</div></div>
+        </div>
+        <p class="footnote" id="fn1">1. A run counts as cold when its runner has no cached output for any step. <a href="#fnref1">Back to text</a></p>
+
+        <h2 id="design">One cache service sits between runners and storage</h2>
+        <p>Runners ask the <span class="term" tabindex="0" data-def="A copy of build output stored under a hash of its inputs, so an identical build can reuse it instead of running again.">content-addressed cache</span> before they build. A hit returns the stored output. A miss builds as today and writes the result back.</p>
+
+        <figure>
+          <button class="zoom-btn no-print" type="button">Enlarge</button>
+          <div class="figure-frame">
+            <svg viewBox="0 64 760 172" style="--fig-min: 760px" role="img" aria-labelledby="fig1-t fig1-d" xmlns="http://www.w3.org/2000/svg">
+              <title id="fig1-t">Build request path through the shared cache</title>
+              <desc id="fig1-d">A runner sends a build request to the cache service. On a hit the cache returns stored output. On a miss the runner builds and writes the output back to object storage through the cache.</desc>
+              <defs>
+                <marker id="fig1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+                <marker id="fig1-arrow-focus" class="focus" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+              </defs>
+              <rect class="d-box" x="20" y="80" width="160" height="72" rx="6"/>
+              <text class="d-label" x="100" y="112" text-anchor="middle">CI runner</text>
+              <text class="d-small" x="100" y="132" text-anchor="middle">any team</text>
+              <rect class="d-focus" x="300" y="80" width="170" height="72" rx="6"/>
+              <text class="d-label" x="385" y="112" text-anchor="middle">Cache service</text>
+              <text class="d-small" x="385" y="132" text-anchor="middle">new in phase 1</text>
+              <rect class="d-box" x="580" y="80" width="160" height="72" rx="6"/>
+              <text class="d-label" x="660" y="112" text-anchor="middle">Object storage</text>
+              <text class="d-small" x="660" y="132" text-anchor="middle">existing bucket</text>
+              <path class="d-edge focus" d="M180 104 H298" marker-end="url(#fig1-arrow-focus)"/>
+              <text class="d-small" x="239" y="94" text-anchor="middle">1. lookup</text>
+              <path class="d-edge" d="M300 130 H182" marker-end="url(#fig1-arrow)"/>
+              <text class="d-small" x="241" y="148" text-anchor="middle">2. hit: output</text>
+              <path class="d-edge" d="M470 116 H578" marker-end="url(#fig1-arrow)"/>
+              <text class="d-small" x="524" y="106" text-anchor="middle">read / write</text>
+              <path class="d-edge control" d="M100 152 V200 H385 V154" marker-end="url(#fig1-arrow)"/>
+              <text class="d-small" x="242" y="222" text-anchor="middle">3. miss: build, then write back</text>
+            </svg>
+          </div>
+          <figcaption><span class="fig-id">FIG-1</span> <strong>Every build checks the cache first; only misses do real work.</strong> Solid lines carry data; the dashed line is the fallback path on a miss.</figcaption>
+          <script type="text/plain" class="diagram-source">
+flowchart LR
+  R[CI runner] -- 1 lookup --> C[Cache service]
+  C -- 2 hit: output --> R
+  C <-- read / write --> S[Object storage]
+  R -. 3 miss: build, then write back .-> C
+          </script>
+        </figure>
+
+        <h2 id="options">A shared service beats bigger runners on hit rate and cost</h2>
+        <div class="compare">
+          <div class="option recommended"><h3>A. Shared service <span class="chip">Recommended</span></h3><p>One cache for all runners. Highest hit rate. Needs an owner.</p></div>
+          <div class="option"><h3>B. Bigger runners</h3><p>Keep per-team caches on larger disks. Fewer cold starts, same duplication, higher spend.</p></div>
+          <div class="option"><h3>C. Do nothing</h3><p>No cost now. Queue time keeps growing with headcount.</p></div>
+        </div>
+
+        <h2 id="plan">Phase 1 runs six weeks, in three steps</h2>
+        <ol class="steps">
+          <li><strong>Stand up the service (weeks 1 and 2)</strong>Deploy behind the existing load balancer. Read-only for one repository.</li>
+          <li><strong>Turn on writes for four repositories (weeks 3 and 4)</strong>Watch hit rate and stale-artifact errors daily.</li>
+          <li><strong>Decide (week 6)</strong>Expand, adjust, or roll back, using the stop conditions above.</li>
+        </ol>
+
+        <div class="callout risk"><span class="label">Main risk</span>A stale artifact could ship a wrong binary. Cache keys include the full toolchain hash, and phase 1 keeps a one-flag rollback.</div>
+
+        <h2 id="detail" class="annex">Detail</h2>
+        <details><summary>How cache keys are computed</summary><div class="body"><p>Key = hash of source inputs, lockfiles, toolchain version and build flags. Any change produces a new key, so nothing is ever overwritten in place.</p></div></details>
+        <details><summary>Cost breakdown</summary><div class="body">
+          <div class="table-wrap"><table>
+            <thead><tr><th scope="col">Item</th><th scope="col" class="num">Monthly</th><th scope="col">Basis</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Storage, 9 TB</th><td class="num">$1,180</td><td>Cloud price sheet, Oct 2026</td></tr>
+              <tr><th scope="row">Traffic inside the region</th><td class="num">$0</td><td>Same region, no transfer charge</td></tr>
+              <tr><th scope="row">Service compute</th><td class="num">$220</td><td>Two small instances, cloud price sheet, Oct 2026</td></tr>
+            </tbody>
+          </table></div>
+          <p class="table-note">Prices from the cloud provider's public sheet, October 2026. Storage size is an estimate from September's build output.</p>
+        </div></details>
+
+        <!-- ===== Component gallery: every component in base.css once. Delete this section from real pages. ===== -->
+        <h2 id="gallery" class="annex">Component gallery</h2>
+        <p class="purpose">This section shows every component in <code>base.css</code> once, with sample content. Delete it from real pages.</p>
+
+        <h3>Page patterns start from the reader's job</h3>
+        <p>Before choosing components, name what the reader will do in the minute after they open the page. Each job has a pattern in <code>PATTERNS.md</code> and a working example. This brief is the Decide pattern. The <a href="examples/index.html">examples contents page</a> lists all six, and a mixed page with an explorable dataset.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th scope="col">Pattern</th><th scope="col">The reader is trying to</th><th scope="col">Opens with</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><a href="examples/decide.html">Decide</a></th><td>Approve, reject or choose</td><td><code>.bluf</code> with a list</td></tr>
+            <tr><th scope="row"><a href="examples/understand.html">Understand</a></th><td>Build a mental model they can explain</td><td><code>.purpose</code></td></tr>
+            <tr><th scope="row"><a href="examples/look-up.html">Look up</a></th><td>Find one fact fast and leave</td><td><code>.purpose</code> and a filter</td></tr>
+            <tr><th scope="row"><a href="examples/monitor.html">Monitor</a></th><td>See whether anything needs them</td><td><code>.bluf</code> with one status sentence</td></tr>
+            <tr><th scope="row"><a href="examples/do.html">Do</a></th><td>Carry out a procedure correctly</td><td><code>.purpose</code> and preconditions</td></tr>
+            <tr><th scope="row"><a href="examples/review.html">Review</a></th><td>Learn what was found and what to fix first</td><td><code>.bluf</code> with a list</td></tr>
+            <tr><th scope="row"><a href="examples/report-with-dataset.html">Mixed</a></th><td>Read the argument, then explore the records behind it (reading page with an explorable dataset)</td><td>The main pattern's opening, plus a <code>section.dataset</code></td></tr>
+          </tbody>
+        </table></div>
+        <p class="table-note">Declare the pattern on the body: <code>&lt;body class="doc" data-pattern="decide"&gt;</code>. <code>check.mjs</code> checks the opening against it.</p>
+
+        <h3>Pattern components keep one shape each</h3>
+        <p>A Save as PDF button (<code>.print-btn</code>) calls the browser's print. Decide, Review and Do pages carry one in the masthead toolbar, as this page does.</p>
+
+        <div data-view data-noun="entries">
+        <div class="filter" role="search" aria-label="Filter the sample entries">
+          <div class="field"><label for="gallery-q">Filter entries</label><input id="gallery-q" type="search" data-key="gq" placeholder="Type to filter" autocomplete="off"></div>
+          <div class="chips" role="group" aria-labelledby="gallery-area"><span id="gallery-area">Area</span>
+            <button type="button" data-key="area" data-value="">All</button>
+            <button type="button" data-key="area" data-value="cache">Cache</button>
+            <button type="button" data-key="area" data-value="runner">Runner</button>
+          </div>
+        </div>
+        <p class="filter-sentence" aria-live="polite">All 3 entries</p>
+        <p class="filter-empty" hidden>No entries match. Clear the filter to see all three.</p>
+        <div class="print-all">
+          <article class="entry" id="entry-hit" data-filter-item data-area="cache">
+            <h3>Cache hit</h3>
+            <p class="answer">The output came back from the cache; nothing was rebuilt.</p>
+            <p class="detail">A hit takes seconds. The hit rate is the share of steps served this way.</p>
+            <p class="related">Related: <a href="#entry-miss">Cache miss</a></p>
+          </article>
+          <article class="entry" id="entry-miss" data-filter-item data-area="cache">
+            <h3>Cache miss</h3>
+            <p class="answer">Nothing matched the key, so the step ran and wrote its output back.</p>
+            <p class="related">Related: <a href="#entry-hit">Cache hit</a></p>
+          </article>
+          <article class="entry" id="entry-cold" data-filter-item data-area="runner">
+            <h3>Cold runner</h3>
+            <p class="answer">A runner that starts with an empty local cache.</p>
+            <p class="related">Related: <a href="#situation">Why cold starts matter</a></p>
+          </article>
+        </div>
+        </div>
+        <p>The filter keeps its state in the address (try a chip, then copy the link, or press Back to undo it), and the sentence under it says what the list shows. An <code>.entry</code> is the Look up shape: term, one-line answer, detail, related links. Each has an <code>id</code>, so a link can point at one.</p>
+
+        <article class="finding" id="finding-sample">
+          <h3>Stale artifacts are served for up to an hour after a key change</h3>
+          <div class="finding-meta"><span class="status danger">High</span><span class="chip">Fix before rollout</span></div>
+          <dl class="fields">
+            <dt>Where</dt><dd>Cache service, key lookup</dd>
+            <dt>Evidence</dt><dd>Two of 40 test builds returned output from the previous toolchain.</dd>
+            <dt>Impact</dt><dd>A wrong binary could ship.</dd>
+            <dt>Fix</dt><dd>Include the toolchain hash in every key.</dd>
+          </dl>
+        </article>
+        <p>A <code>.finding</code> is the Review shape: a title that states the defect, severity as a <code>.status</code>, a disposition chip, then where, evidence, impact and fix in <code>dl.fields</code>.</p>
+
+        <div class="preconditions">
+          <span class="label">Before you start</span>
+          <dl class="fields">
+            <dt>Who</dt><dd>The platform on-call engineer</dd>
+            <dt>Access</dt><dd>Write access to the cache service configuration</dd>
+            <dt>Time</dt><dd>About 10 minutes</dd>
+          </dl>
+        </div>
+        <div class="procedure">
+        <div class="progress"><span class="progress-text" aria-live="polite">Step 1 of 2</span><a class="progress-jump" href="#gallery-step-1">Go to it</a><span class="spacer"></span><button type="button" class="btn" data-reset-steps>Reset progress</button></div>
+        <ol class="steps do">
+          <li id="gallery-step-1"><label class="step-check"><input type="checkbox"> Turn on read-only mode</label>
+            <pre><code>cachectl mode set read-only</code></pre>
+            <p class="expect"><strong>You should see:</strong> mode: read-only</p></li>
+          <li id="gallery-step-2"><label class="step-check"><input type="checkbox"> Confirm no writes for five minutes</label>
+            <p class="expect"><strong>You should see:</strong> the write counter stays at 0.</p></li>
+        </ol>
+        </div>
+        <p>Do pages open with <code>.preconditions</code>, keep a <code>.progress</code> line in view, and give each step a checkbox and an <code>.expect</code> line. Ticks are kept for this page until the reader resets them, and the printed copy has empty boxes. Understand pages end each section with a <code>.bridge</code> line. Monitor and Review pages state their filter and time in a <code>.print-only</code> line that appears only on paper.</p>
+        <p class="bridge">You now know the pattern components. Next: callouts.</p>
+
+        <h3>Callouts hold one aside per section</h3>
+        <div class="callout"><span class="label">Note</span>Plain callouts use the accent tint.</div>
+        <div class="callout decision"><span class="label">Decision</span>Platform owns the cache service; teams own their cache keys.</div>
+        <div class="callout risk"><span class="label">Risk</span>Storage cost grows with the number of branches kept.</div>
+        <div class="callout stop"><span class="label">Stop</span>Roll back if any build ships a stale artifact.</div>
+
+        <h3>Status is a shape and a word</h3>
+        <ul>
+          <li>Cache service: <span class="status ok">On track</span></li>
+          <li>Write access for four repositories: <span class="status warn">At risk</span></li>
+          <li>Security review: <span class="status danger">Blocked</span></li>
+          <li>Rollout to all teams: <span class="status idle">Not started</span></li>
+        </ul>
+        <p>Chips are small tags: <span class="chip">Recommended</span> <span class="chip">Draft</span> <span class="chip">Platform team</span></p>
+
+        <h3>Cards hold real groups</h3>
+        <div class="cards">
+          <div class="card"><h4>Runner team</h4><p>Owns the runners and their images. Joins weekly reviews in phase 1.</p></div>
+          <div class="card"><h4>Platform team</h4><p>Builds and runs the cache service. One engineer for six weeks.</p></div>
+          <a class="card" href="#design"><h4>Read the design</h4><p>How a lookup, a hit and a miss work.</p></a>
+        </div>
+        <p>A <code>.grid</code> holds peers that are not cards:</p>
+        <div class="grid">
+          <div><h4>Hit</h4><p>Output comes back from the cache in seconds.</p></div>
+          <div><h4>Miss</h4><p>The runner builds as today and writes back.</p></div>
+          <div><h4>Stale</h4><p>A key collision returns the wrong output. Keys prevent it.</p></div>
+        </div>
+
+        <h3>Tabs show parallel views of one thing</h3>
+        <div class="tabs">
+          <div role="tablist" aria-label="Phase 1 views">
+            <button type="button" role="tab" id="tab-week" aria-controls="panel-week" aria-selected="true">By week</button>
+            <button type="button" role="tab" id="tab-team" aria-controls="panel-team" aria-selected="false">By team</button>
+          </div>
+          <div role="tabpanel" id="panel-week" aria-labelledby="tab-week" tabindex="0">
+            <p class="tab-label">By week</p>
+            <p>Weeks 1 and 2: service up, read-only. Weeks 3 and 4: writes on. Week 6: decide.</p>
+          </div>
+          <div role="tabpanel" id="panel-team" aria-labelledby="tab-team" tabindex="0">
+            <p class="tab-label">By team</p>
+            <p>Platform builds the service. Runner team updates images. Four product teams switch on writes.</p>
+          </div>
+        </div>
+
+        <h3>Dated events use a timeline</h3>
+        <ol class="timeline">
+          <li><time datetime="2026-07">Jul 2026</time>Queue time starts to climb (runner metrics).</li>
+          <li><time datetime="2026-09">Sep 2026</time>The CI export shows 52% of runs start cold.</li>
+          <li class="now"><time datetime="2026-10-22">22 Oct 2026</time>This brief.</li>
+          <li><time datetime="2026-11-30">30 Nov 2026</time>Phase 1 decision.</li>
+        </ol>
+
+        <h3>A comparison table puts options in columns</h3>
+        <div class="table-wrap"><table>
+          <caption>Options against the deciding criteria</caption>
+          <thead><tr><th scope="col">Criterion</th><th scope="col" class="rec">A. Shared service</th><th scope="col">B. Bigger runners</th><th scope="col">C. Do nothing</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Expected hit rate</th><td class="rec">About 80% (estimate)</td><td>About 60% (estimate)</td><td>48% today</td></tr>
+            <tr><th scope="row">Monthly cost</th><td class="rec">$1,400</td><td>$3,100</td><td>$0</td></tr>
+            <tr><th scope="row">Engineering effort</th><td class="rec">Six weeks</td><td>One week</td><td>None</td></tr>
+            <tr><th scope="row">Reversible</th><td class="rec">In a day</td><td>In a week</td><td>Not applicable</td></tr>
+          </tbody>
+        </table></div>
+        <p class="table-note">Costs from the cloud price sheet, Oct 2026. Hit rates are estimates from the September CI export; today's rate is measured.</p>
+
+        <p>A dataset inside a reading page (<code>section.dataset</code>, made by <code>tools/table.mjs</code>) switches one section to tool density. Its bar chart filters the table under it; each bar counts the rows under every other filter. Sortable columns put a <code>button.sort</code> in the header: one click sorts ascending, the next descending. The table scrolls in a capped frame and keeps its header in view, and the address keeps the whole view:</p>
+        <section class="dataset" data-view data-noun="repositories" id="repos">
+          <div class="dataset-head"><p class="dataset-title">Repositories by cold-start rate</p><p class="dataset-how">Filter, sort, or pick a bar to narrow the table.</p></div>
+          <div class="filter" role="search" aria-label="Filter repositories">
+            <div class="field"><label for="repos-q">Search repositories</label><input id="repos-q" type="search" data-key="rq" autocomplete="off"></div>
+        
+          </div>
+          <p class="filter-sentence" aria-live="polite">All 18 repositories</p>
+        <figure class="linked">
+          <button class="zoom-btn no-print" type="button">Enlarge</button>
+          <div class="figure-frame">
+            <!-- Scale: x = 74 + value * 26.6775; axis 0 to 8 repositories, step 2. Made by tools/bars.mjs. -->
+            <svg viewBox="0 0 320 164" style="--fig-min: 320px" role="group" aria-labelledby="repos-chart-t repos-chart-d" xmlns="http://www.w3.org/2000/svg">
+              <title id="repos-chart-t">Repositories by team</title>
+              <desc id="repos-chart-d">Web 7 repositories; Infra 5 repositories; Data 4 repositories; Mobile 2 repositories.</desc>
+              <text class="c-tick" x="74" y="158" text-anchor="middle">0</text>
+              <line class="c-grid" x1="127.4" y1="8" x2="127.4" y2="140"/>
+              <text class="c-tick" x="127.4" y="158" text-anchor="middle">2</text>
+              <line class="c-grid" x1="180.7" y1="8" x2="180.7" y2="140"/>
+              <text class="c-tick" x="180.7" y="158" text-anchor="middle">4</text>
+              <line class="c-grid" x1="234.1" y1="8" x2="234.1" y2="140"/>
+              <text class="c-tick" x="234.1" y="158" text-anchor="middle">6</text>
+              <line class="c-grid" x1="287.4" y1="8" x2="287.4" y2="140"/>
+              <text class="c-tick" x="287.4" y="158" text-anchor="middle">8</text>
+              <line class="c-axis" x1="74" y1="8" x2="74" y2="140"/>
+              <g role="button" tabindex="0" aria-pressed="false" data-key="team" data-value="web" data-label="Web">
+                <rect class="c-hit" x="12" y="6" width="296" height="32"/>
+                <text class="c-label" x="66" y="27" text-anchor="end">Web</text>
+                <rect class="c-bar" x="74" y="12" width="186.7" height="20" data-unit="26.6775"/>
+                <text class="c-value" x="266.7" y="27" data-count>7</text>
+              </g>
+              <g role="button" tabindex="0" aria-pressed="false" data-key="team" data-value="infra" data-label="Infra">
+                <rect class="c-hit" x="12" y="38" width="296" height="32"/>
+                <text class="c-label" x="66" y="59" text-anchor="end">Infra</text>
+                <rect class="c-bar" x="74" y="44" width="133.4" height="20" data-unit="26.6775"/>
+                <text class="c-value" x="213.4" y="59" data-count>5</text>
+              </g>
+              <g role="button" tabindex="0" aria-pressed="false" data-key="team" data-value="data" data-label="Data">
+                <rect class="c-hit" x="12" y="70" width="296" height="32"/>
+                <text class="c-label" x="66" y="91" text-anchor="end">Data</text>
+                <rect class="c-bar" x="74" y="76" width="106.7" height="20" data-unit="26.6775"/>
+                <text class="c-value" x="186.7" y="91" data-count>4</text>
+              </g>
+              <g role="button" tabindex="0" aria-pressed="false" data-key="team" data-value="mobile" data-label="Mobile">
+                <rect class="c-hit" x="12" y="102" width="296" height="32"/>
+                <text class="c-label" x="66" y="123" text-anchor="end">Mobile</text>
+                <rect class="c-bar" x="74" y="108" width="53.4" height="20" data-unit="26.6775"/>
+                <text class="c-value" x="133.4" y="123" data-count>2</text>
+              </g>
+            </svg>
+          </div>
+          <figcaption><strong>Web owns the most repositories.</strong> Pick a bar to filter the table below; pick it again to clear. Each bar counts the rows under every other filter. CI export, Sep 2026.</figcaption>
+        </figure>
+          <p class="filter-empty" hidden>No repositories match. Clear the filters to see all 18.</p>
+        <div class="table-wrap scroll-y"><table id="repos-table">
+            <thead><tr><th scope="col" data-col="repo"><button type="button" class="sort">Repository</button></th><th scope="col" data-col="team"><button type="button" class="sort">Team</button></th><th scope="col" class="num" data-col="runs"><button type="button" class="sort">Runs</button></th><th scope="col" class="num" data-col="cold"><button type="button" class="sort">Cold starts</button></th></tr></thead>
+            <tbody>
+              <tr data-filter-item data-team="web"><th scope="row">web-app</th><td>Web</td><td class="num" data-sort="4210">4,210</td><td class="num" data-sort="61">61%</td></tr>
+              <tr data-filter-item data-team="data"><th scope="row">data-pipeline</th><td>Data</td><td class="num" data-sort="3980">3,980</td><td class="num" data-sort="72">72%</td></tr>
+              <tr data-filter-item data-team="mobile"><th scope="row">mobile-ios</th><td>Mobile</td><td class="num" data-sort="2870">2,870</td><td class="num" data-sort="55">55%</td></tr>
+              <tr data-filter-item data-team="mobile"><th scope="row">mobile-android</th><td>Mobile</td><td class="num" data-sort="2640">2,640</td><td class="num" data-sort="53">53%</td></tr>
+              <tr data-filter-item data-team="web"><th scope="row">payments</th><td>Web</td><td class="num" data-sort="2120">2,120</td><td class="num" data-sort="49">49%</td></tr>
+              <tr data-filter-item data-team="data"><th scope="row">search</th><td>Data</td><td class="num" data-sort="1940">1,940</td><td class="num" data-sort="58">58%</td></tr>
+              <tr data-filter-item data-team="infra"><th scope="row">infra-modules</th><td>Infra</td><td class="num" data-sort="1610">1,610</td><td class="num" data-sort="31">31%</td></tr>
+              <tr data-filter-item data-team="web"><th scope="row">design-system</th><td>Web</td><td class="num" data-sort="1480">1,480</td><td class="num" data-sort="44">44%</td></tr>
+              <tr data-filter-item data-team="web"><th scope="row">notifications</th><td>Web</td><td class="num" data-sort="1220">1,220</td><td class="num" data-sort="39">39%</td></tr>
+              <tr data-filter-item data-team="web"><th scope="row">billing</th><td>Web</td><td class="num" data-sort="1090">1,090</td><td class="num" data-sort="47">47%</td></tr>
+              <tr data-filter-item data-team="data"><th scope="row">ml-features</th><td>Data</td><td class="num" data-sort="980">980</td><td class="num" data-sort="68">68%</td></tr>
+              <tr data-filter-item data-team="infra"><th scope="row">auth</th><td>Infra</td><td class="num" data-sort="910">910</td><td class="num" data-sort="28">28%</td></tr>
+              <tr data-filter-item data-team="data"><th scope="row">reporting</th><td>Data</td><td class="num" data-sort="870">870</td><td class="num" data-sort="51">51%</td></tr>
+              <tr data-filter-item data-team="web"><th scope="row">docs-site</th><td>Web</td><td class="num" data-sort="760">760</td><td class="num" data-sort="22">22%</td></tr>
+              <tr data-filter-item data-team="infra"><th scope="row">edge-proxy</th><td>Infra</td><td class="num" data-sort="640">640</td><td class="num" data-sort="35">35%</td></tr>
+              <tr data-filter-item data-team="infra"><th scope="row">feature-flags</th><td>Infra</td><td class="num" data-sort="520">520</td><td class="num" data-sort="26">26%</td></tr>
+              <tr data-filter-item data-team="web"><th scope="row">admin-console</th><td>Web</td><td class="num" data-sort="480">480</td><td class="num" data-sort="41">41%</td></tr>
+              <tr data-filter-item data-team="infra"><th scope="row">load-tests</th><td>Infra</td><td class="num" data-sort="310">310</td><td class="num" data-sort="64">64%</td></tr>
+            </tbody>
+          </table></div>
+        <p class="table-note">CI export, September 2026. Runs are pipeline runs in the month.</p>
+          <p class="dataset-print-note">This printed copy shows the summary. The full table of 18 repositories is in the file.</p>
+        </section>
+
+        <h3>Charts are hand-drawn SVG with direct labels</h3>
+        <figure>
+          <button class="zoom-btn no-print" type="button">Enlarge</button>
+          <div class="figure-frame">
+            <!-- Scale: x = 96 + minutes * 22. Coordinates computed from the data, not by eye. -->
+            <svg viewBox="0 0 640 224" style="--fig-min: 640px" role="img" aria-labelledby="fig3-t fig3-d" xmlns="http://www.w3.org/2000/svg">
+              <title id="fig3-t">Median minutes per pipeline stage by team</title>
+              <desc id="fig3-d">Stacked bars of queue, build and test minutes. Data 21.0 minutes, Web 18.4, Mobile 16.2, Infra 11.8. Queue time is the largest part for Data and Web.</desc>
+              <line class="c-grid" x1="206" y1="28" x2="206" y2="196"/>
+              <line class="c-grid" x1="316" y1="28" x2="316" y2="196"/>
+              <line class="c-grid" x1="426" y1="28" x2="426" y2="196"/>
+              <line class="c-grid" x1="536" y1="28" x2="536" y2="196"/>
+              <line class="c-axis" x1="96" y1="28" x2="96" y2="196"/>
+              <text class="c-tick" x="88" y="53" text-anchor="end">Data</text>
+              <rect class="c-cat-1" x="96" y="36" width="184.8" height="24"/>
+              <rect class="c-cat-2" x="280.8" y="36" width="156.2" height="24"/>
+              <rect class="c-cat-3" x="437" y="36" width="121" height="24"/>
+              <text class="c-value" x="566" y="53">21.0 min</text>
+              <text class="c-tick" x="88" y="93" text-anchor="end">Web</text>
+              <rect class="c-cat-1" x="96" y="76" width="154" height="24"/>
+              <rect class="c-cat-2" x="250" y="76" width="134.2" height="24"/>
+              <rect class="c-cat-3" x="384.2" y="76" width="116.6" height="24"/>
+              <text class="c-value" x="508.8" y="93">18.4 min</text>
+              <text class="c-tick" x="88" y="133" text-anchor="end">Mobile</text>
+              <rect class="c-cat-1" x="96" y="116" width="129.8" height="24"/>
+              <rect class="c-cat-2" x="225.8" y="116" width="140.8" height="24"/>
+              <rect class="c-cat-3" x="366.6" y="116" width="85.8" height="24"/>
+              <text class="c-value" x="460.4" y="133">16.2 min</text>
+              <text class="c-tick" x="88" y="173" text-anchor="end">Infra</text>
+              <rect class="c-cat-1" x="96" y="156" width="79.2" height="24"/>
+              <rect class="c-cat-2" x="175.2" y="156" width="110" height="24"/>
+              <rect class="c-cat-3" x="285.2" y="156" width="70.4" height="24"/>
+              <text class="c-value" x="363.6" y="173">11.8 min</text>
+              <text class="c-tick" x="96" y="214" text-anchor="middle">0</text>
+              <text class="c-tick" x="206" y="214" text-anchor="middle">5</text>
+              <text class="c-tick" x="316" y="214" text-anchor="middle">10</text>
+              <text class="c-tick" x="426" y="214" text-anchor="middle">15</text>
+              <text class="c-tick" x="536" y="214" text-anchor="middle">20 min</text>
+            </svg>
+          </div>
+          <figcaption><span class="fig-id">FIG-2</span> <strong>Queue time is the largest share of the wait for the two slowest teams.</strong> <span class="key cat-1">Queue</span><span class="key cat-2">Build</span><span class="key cat-3">Test</span> CI export, Sep 2026.</figcaption>
+        </figure>
+        <details><summary>Data for FIG-2</summary><div class="body">
+          <div class="table-wrap"><table>
+            <thead><tr><th scope="col">Team</th><th scope="col" class="num">Queue</th><th scope="col" class="num">Build</th><th scope="col" class="num">Test</th><th scope="col" class="num">Total</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Data</th><td class="num">8.4</td><td class="num">7.1</td><td class="num">5.5</td><td class="num">21.0</td></tr>
+              <tr><th scope="row">Web</th><td class="num">7.0</td><td class="num">6.1</td><td class="num">5.3</td><td class="num">18.4</td></tr>
+              <tr><th scope="row">Mobile</th><td class="num">5.9</td><td class="num">6.4</td><td class="num">3.9</td><td class="num">16.2</td></tr>
+              <tr><th scope="row">Infra</th><td class="num">3.6</td><td class="num">5.0</td><td class="num">3.2</td><td class="num">11.8</td></tr>
+            </tbody>
+          </table></div>
+          <p class="table-note">Median minutes per stage, CI export, September 2026.</p>
+        </div></details>
+
+        <figure>
+          <button class="zoom-btn no-print" type="button">Enlarge</button>
+          <div class="figure-frame">
+            <!-- Scale: y = 150 - percent * 1.6. -->
+            <svg class="small-ok" viewBox="0 0 320 184" style="--fig-min: 320px" role="img" aria-labelledby="fig4-t fig4-d" xmlns="http://www.w3.org/2000/svg">
+              <title id="fig4-t">Share of runs that start cold, by repository size</title>
+              <desc id="fig4-d">Large repositories 71 percent, medium 52 percent, small 34 percent.</desc>
+              <line class="c-axis" x1="16" y1="150" x2="304" y2="150"/>
+              <rect class="c-bar focus" x="40" y="36.4" width="64" height="113.6"/>
+              <text class="c-value" x="72" y="28.4" text-anchor="middle">71%</text>
+              <text class="c-tick" x="72" y="170" text-anchor="middle">Large</text>
+              <rect class="c-bar" x="136" y="66.8" width="64" height="83.2"/>
+              <text class="c-value" x="168" y="58.8" text-anchor="middle">52%</text>
+              <text class="c-tick" x="168" y="170" text-anchor="middle">Medium</text>
+              <rect class="c-bar" x="232" y="95.6" width="64" height="54.4"/>
+              <text class="c-value" x="264" y="87.6" text-anchor="middle">34%</text>
+              <text class="c-tick" x="264" y="170" text-anchor="middle">Small</text>
+            </svg>
+          </div>
+          <figcaption><span class="fig-id">FIG-3</span> <strong>Large repositories start cold most often, so phase 1 starts with them.</strong> A small chart (<code>.small-ok</code>) keeps its own size and fits a phone. CI export, Sep 2026.</figcaption>
+        </figure>
+
+        <h3>Zones and categories keep one colour each</h3>
+        <figure>
+          <button class="zoom-btn no-print" type="button">Enlarge</button>
+          <div class="figure-frame">
+            <svg viewBox="0 0 720 300" style="--fig-min: 720px" role="img" aria-labelledby="fig2-t fig2-d" xmlns="http://www.w3.org/2000/svg">
+              <title id="fig2-t">Who owns which part of the cache path</title>
+              <desc id="fig2-d">Three team-owned runner groups in the team zone send requests to the platform-owned cache service, which writes to platform-owned object storage.</desc>
+              <defs><marker id="fig2-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+              <text class="d-mark" x="704" y="24" text-anchor="end">ILLUSTRATIVE</text>
+              <rect class="d-zone" x="16" y="36" width="300" height="248" rx="8"/>
+              <text class="d-small" x="30" y="58">Team zone</text>
+              <rect class="d-zone" x="380" y="36" width="324" height="248" rx="8"/>
+              <text class="d-small" x="394" y="58">Platform zone</text>
+              <rect class="d-cat-1" x="40" y="76" width="150" height="48" rx="6"/>
+              <text class="d-label" x="115" y="105" text-anchor="middle">Web runners</text>
+              <rect class="d-cat-1" x="40" y="146" width="150" height="48" rx="6"/>
+              <text class="d-label" x="115" y="175" text-anchor="middle">Data runners</text>
+              <rect class="d-cat-1" x="40" y="216" width="150" height="48" rx="6"/>
+              <text class="d-label" x="115" y="245" text-anchor="middle">Mobile runners</text>
+              <rect class="d-cat-4" x="440" y="76" width="160" height="56" rx="6"/>
+              <text class="d-label" x="520" y="109" text-anchor="middle">Cache service</text>
+              <rect class="d-cat-4" x="440" y="200" width="160" height="56" rx="6"/>
+              <text class="d-label" x="520" y="233" text-anchor="middle">Object storage</text>
+              <path class="d-edge" d="M190 100 L438 98" marker-end="url(#fig2-arrow)"/>
+              <path class="d-edge" d="M190 170 L438 108" marker-end="url(#fig2-arrow)"/>
+              <path class="d-edge" d="M190 240 L438 118" marker-end="url(#fig2-arrow)"/>
+              <path class="d-edge" d="M520 132 V198" marker-end="url(#fig2-arrow)"/>
+              <text class="d-small" x="530" y="170">write back</text>
+            </svg>
+          </div>
+          <figcaption><span class="fig-id">FIG-4</span> <strong>Teams own their runners; platform owns everything behind the cache.</strong> <span class="key cat-1">Team-owned</span><span class="key cat-4">Platform-owned</span> Dashed outlines are ownership zones. <span class="mark-illustrative">Illustrative</span></figcaption>
+        </figure>
+
+        <h3>Annotation dims the context and points at the subject</h3>
+        <div class="annotate">
+          <div class="stats">
+            <div class="stat subject"><div class="value">52%</div><div class="what">Runs that start cold</div></div>
+            <div class="stat context"><div class="value">18.4 min</div><div class="what">Median pipeline time</div></div>
+            <div class="stat context"><div class="value">2.1×</div><div class="what">Queue time growth</div></div>
+          </div>
+          <p class="pointer-note up"><span class="n">1</span>Phase 1 has to move this number. The others follow from it.</p>
+        </div>
+        <div class="grid">
+          <p class="pointer-note down"><span class="n">2</span>Points down at what sits below.</p>
+          <p class="pointer-note right"><span class="n">3</span>Points right.</p>
+          <p class="pointer-note left"><span class="n">4</span>Points left.</p>
+        </div>
+
+        <h3>Quotes, code and forms</h3>
+        <blockquote><p>Half our pipeline time goes to rebuilding things nobody changed.</p><footer>Runner team retrospective notes, Sep 2026</footer></blockquote>
+
+        <figure class="code">
+          <pre><code><span class="tok-c"># Inputs that form a cache key</span>
+<span class="tok-k">key</span> = sha256(source_tree, lockfiles, toolchain_version, build_flags)
+<span class="tok-k">prefix</span> = <span class="tok-s">"cache/v1/"</span></code></pre>
+          <figcaption><code>cache-key.txt</code>: what goes into a key.</figcaption>
+        </figure>
+
+        <form id="calc" class="no-print" onsubmit="return false">
+          <fieldset>
+            <legend>Estimate the time saved</legend>
+            <div class="field"><label for="runs">Runs per day</label><input id="runs" name="runs" type="number" min="0" value="400"></div>
+            <div class="field"><label for="mins">Minutes saved by a hit</label><input id="mins" name="mins" type="number" min="0" step="0.5" value="6"><span class="hint">Your own estimate.</span></div>
+            <div class="field"><label for="rate">Expected hit rate</label><select id="rate" name="rate"><option value="0.6">60%</option><option value="0.7">70%</option><option value="0.8">80%</option></select></div>
+            <label class="check"><input id="week" name="week" type="checkbox"> Show a five-day week</label>
+            <p>Estimated saving: <output id="calc-out" for="runs mins rate week">24 hours a day</output></p>
+          </fieldset>
+        </form>
+
+        <hr>
+        <p>A plain rule (above) separates loose groups. The dotted ornament before the sources is the one decoration a page may use, at most three times.</p>
+
+        <h2 id="glossary" class="annex">Glossary</h2>
+        <dl class="glossary">
+          <dt>Cache hit rate</dt><dd>The share of build steps served from the cache instead of run again.</dd>
+          <dt>Cold runner</dt><dd>A runner that starts with an empty local cache, so it rebuilds everything.</dd>
+          <dt>Content-addressed cache</dt><dd>A copy of build output stored under a hash of its inputs, so an identical build can reuse it instead of running again.</dd>
+        </dl>
+
+        <hr class="mark">
+        <h2 id="sources" class="annex">Sources</h2>
+        <div class="sources"><ol><li>CI analytics export, September 2026.</li><li>Runner metrics dashboard, July to October 2026.</li><li>Cloud provider price sheet, October 2026.</li><li>Platform goals tracker, October 2026.</li></ol></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<dialog class="zoom" id="zoom" aria-label="Enlarged figure"><div class="zoom-bar"><button type="button" data-z="-1" aria-label="Zoom out">−</button><button type="button" data-z="0" aria-label="Fit to window">Fit</button><button type="button" data-z="1" aria-label="Zoom in">+</button><span id="zoom-level" class="muted">100%</span><span class="spacer"></span><button type="button" data-close>Close</button></div><div class="zoom-stage" id="zoom-stage"></div></dialog>
+
+<script>
+(() => {
+  const root = document.documentElement, K = "hs:" + location.pathname + ":";
+  const store = { set: (k, v) => { try { v ? localStorage.setItem(K + k, v) : localStorage.removeItem(K + k); } catch {} } };
+
+  // Palette and theme. Remembered for this page only. Theme cycles auto, light, dark.
+  const palBtns = [...document.querySelectorAll("[data-set-palette]")], themeBtn = document.querySelector("[data-toggle-theme]");
+  const showPal = () => palBtns.forEach(b => b.setAttribute("aria-pressed", b.dataset.setPalette === (root.dataset.palette || "paper")));
+  const showTheme = () => { if (themeBtn) themeBtn.textContent = "Theme: " + (root.dataset.theme || "auto"); };
+  palBtns.forEach(b => b.onclick = () => { root.dataset.palette = b.dataset.setPalette; store.set("palette", b.dataset.setPalette); showPal(); });
+  if (themeBtn) themeBtn.onclick = () => { const next = { auto: "light", light: "dark", dark: "" }[root.dataset.theme || "auto"];
+    if (next) root.dataset.theme = next; else delete root.dataset.theme; store.set("theme", next); showTheme(); };
+  showPal(); showTheme();
+
+  // Contents rail. The list is in the HTML; this marks the current section and
+  // fills the list only if it was left empty. Collapsed by default on narrow screens.
+  const toc = document.querySelector(".toc"), list = toc && toc.querySelector("ol");
+  const heads = [...document.querySelectorAll("main h2")];
+  if (toc && list) {
+    heads.forEach((h, i) => { if (!h.id) h.id = (h.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "section") + "-" + i; });
+    if (!list.children.length) heads.forEach(h => { const li = document.createElement("li"), a = document.createElement("a"); a.href = "#" + h.id; a.textContent = h.textContent; li.append(a); list.append(li); });
+    if (!list.children.length) toc.hidden = true;
+    const box = toc.querySelector("details"), wide = matchMedia("(min-width: 1100px)");
+    if (box) { box.open = wide.matches; wide.addEventListener("change", e => { box.open = e.matches; }); }
+    const links = [...list.querySelectorAll("a")];
+    const mark = () => { let cur = heads[0]; for (const h of heads) if (h.getBoundingClientRect().top <= innerHeight * 0.3) cur = h;
+      if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) cur = heads[heads.length - 1];
+      links.forEach(a => a.getAttribute("href") === "#" + (cur && cur.id) ? a.setAttribute("aria-current", "location") : a.removeAttribute("aria-current")); };
+    let raf = 0; addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(mark); }, { passive: true }); mark();
+  }
+
+  // Enlarge any figure: fit to the window on open, real zoom, real scroll.
+  const dlg = document.getElementById("zoom"), stage = document.getElementById("zoom-stage"), lvl = document.getElementById("zoom-level");
+  let z = 1, w = 0, h = 0;
+  const fit = () => { const s = getComputedStyle(stage);
+    return Math.min((stage.clientWidth - parseFloat(s.paddingLeft) - parseFloat(s.paddingRight)) / w, (stage.clientHeight - parseFloat(s.paddingTop) - parseFloat(s.paddingBottom)) / h); };
+  const apply = () => { const el = stage.firstElementChild; if (!el) return; el.style.width = w * z + "px"; el.style.height = h * z + "px"; lvl.textContent = Math.round(z * 100) + "%"; };
+  document.querySelectorAll(".zoom-btn").forEach(b => b.onclick = () => {
+    const src = b.closest("figure") && b.closest("figure").querySelector(".figure-frame > svg, .figure-frame > img, .figure-frame > picture img");
+    if (!src || !dlg) return;
+    const vb = src.viewBox && src.viewBox.baseVal, r = src.getBoundingClientRect();
+    [w, h] = vb && vb.width ? [vb.width, vb.height] : src.naturalWidth ? [src.naturalWidth, src.naturalHeight] : [r.width, r.height];
+    if (!w || !h) return;
+    const c = src.cloneNode(true), name = src.querySelector("title");
+    c.removeAttribute("id"); c.querySelectorAll("[id]").forEach(e => e.removeAttribute("id"));
+    c.removeAttribute("aria-labelledby"); c.setAttribute("aria-label", name ? name.textContent : (src.alt || "Enlarged figure"));
+    stage.replaceChildren(c); dlg.showModal(); z = Math.min(fit(), 4); apply(); stage.scrollTo(0, 0);
+  });
+  if (dlg) {
+    dlg.querySelectorAll("[data-z]").forEach(b => b.onclick = () => { const d = +b.dataset.z; z = d === 0 ? fit() : Math.min(6, Math.max(0.25, z * (d > 0 ? 1.25 : 0.8))); apply(); });
+    dlg.querySelector("[data-close]").addEventListener("click", () => dlg.close());
+    dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+  }
+
+  // Tabs: one tab stop, arrow keys, Home and End. Panels are visible until this runs.
+  document.querySelectorAll(".tabs").forEach(t => { const tabs = [...t.querySelectorAll('[role="tab"]')];
+    const sel = tab => tabs.forEach(x => { const on = x === tab; x.setAttribute("aria-selected", on); x.tabIndex = on ? 0 : -1;
+      const p = document.getElementById(x.getAttribute("aria-controls")); if (p) p.hidden = !on; });
+    tabs.forEach((tab, i) => { tab.onclick = () => sel(tab); tab.onkeydown = e => { const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (e.key === "Home" || e.key === "End" || d) { e.preventDefault(); const n = e.key === "Home" ? tabs[0] : e.key === "End" ? tabs[tabs.length - 1] : tabs[(i + d + tabs.length) % tabs.length]; sel(n); n.focus(); } }; });
+    sel(tabs.find(x => x.getAttribute("aria-selected") === "true") || tabs[0]); });
+
+  // Gallery calculator: an estimate, recomputed as the inputs change.
+  const calc = document.getElementById("calc");
+  if (calc) { const run = () => { const f = calc.elements, week = f.week.checked;
+    const hrs = (+f.runs.value * +f.mins.value * +f.rate.value) / 60 * (week ? 5 : 1);
+    document.getElementById("calc-out").textContent = (Math.round(hrs * 10) / 10) + (week ? " hours a week" : " hours a day"); };
+    calc.addEventListener("input", run); run(); }
+
+  // Page patterns (PATTERNS.md). Each block does nothing on a page without its markup.
+
+  // Page state: filters, sort and chart picks (PATTERNS.md section 9). The hash
+  // holds it as #key=value&key=value. A change pushes history, so Back undoes it.
+  // An in-page link keeps the state and adds at=<id>; a hash with no "=" is a
+  // plain anchor. A view is a [data-view] element, or the whole page.
+  const views = [...document.querySelectorAll("[data-view]")];
+  if (!views.length && document.querySelector(".filter, button.sort, [data-filter-item]")) views.push(document.body);
+  const viewOf = el => el.closest("[data-view]") || document.body;
+  const read = () => new URLSearchParams(location.hash.includes("=") ? location.hash.slice(1) : "");
+  const coll = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+  const num = x => { const t = x.replace(/[,\s%$]/g, ""); return t !== "" && isFinite(t) ? +t : NaN; }; // "4,210" and "61%" sort as numbers
+  const cmp = (a, b) => { const x = num(a), y = num(b); return isNaN(x) || isNaN(y) ? coll.compare(a, b) : x - y; };
+  const model = views.map(v => {
+    const mine = sel => [...v.querySelectorAll(sel)].filter(el => viewOf(el) === v);
+    const q = mine('input[type="search"]')[0], picks = mine("[data-key][data-value]");
+    return { v, q, qk: q ? q.dataset.key || "q" : "", picks, keys: [...new Set(picks.map(b => b.dataset.key))], items: mine("[data-filter-item]"),
+      groups: mine("[data-filter-group]"), tables: mine("table").filter(t => t.querySelector("th > button.sort")), said: mine(".filter-sentence"),
+      empty: mine(".filter-empty")[0], noun: v.dataset.noun || "items" };
+  });
+  const sortTable = (t, val) => {
+    const ths = [...t.tHead.rows[0].cells], body = t.tBodies[0], rows = [...body.rows];
+    ths.forEach((th, i) => { th.dataset.col = th.dataset.col || "c" + i; });
+    rows.forEach((r, i) => { if (!r.dataset.i) r.dataset.i = i; });
+    const [col, dir] = (val || "").split(/\.(?=[^.]*$)/), ix = ths.findIndex(th => th.dataset.col === col);
+    ths.forEach((th, i) => { if (th.querySelector("button.sort")) th.setAttribute("aria-sort", i === ix ? (dir === "desc" ? "descending" : "ascending") : "none"); });
+    const key = r => { const c = r.cells[ix]; return c ? (c.dataset.sort ?? c.textContent.trim()) : ""; };
+    rows.sort((a, b) => (ix < 0 ? 0 : cmp(key(a), key(b)) * (dir === "desc" ? -1 : 1)) || a.dataset.i - b.dataset.i);
+    body.append(...rows);
+  };
+  const render = () => { const p = read();
+    for (const m of model) {
+      const q = m.qk ? (p.get(m.qk) || "").trim().toLowerCase() : "";
+      if (m.q && document.activeElement !== m.q) m.q.value = p.get(m.qk) || "";
+      const ok = (el, skip) => (!q || el.textContent.toLowerCase().includes(q)) && m.keys.every(k => k === skip || !p.get(k) || el.dataset[k] === p.get(k));
+      let n = 0; m.items.forEach(el => { el.hidden = !ok(el); if (!el.hidden) n++; });
+      m.groups.forEach(g => { g.hidden = !g.querySelector("[data-filter-item]:not([hidden])"); });
+      m.picks.forEach(b => { b.setAttribute("aria-pressed", (p.get(b.dataset.key) || "") === b.dataset.value);
+        // A chart bar counts the records under every filter except its own, so the bars stay a way to switch.
+        const c = b.querySelector("[data-count]"), bar = b.querySelector("[data-unit]"); if (!c) return;
+        const k = m.items.filter(el => el.dataset[b.dataset.key] === b.dataset.value && ok(el, b.dataset.key)).length;
+        c.textContent = k; if (bar) { bar.setAttribute("width", k * bar.dataset.unit); c.setAttribute("x", +bar.getAttribute("x") + k * bar.dataset.unit + 6); } });
+      m.tables.forEach(t => sortTable(t, p.get(t.dataset.sortKey || "sort")));
+      if (m.empty) m.empty.hidden = n > 0 || !m.items.length;
+      const used = (q ? ['matching "' + q + '"'] : []).concat(m.keys.filter(k => p.get(k)).map(k => {
+        const b = m.picks.find(x => x.dataset.key === k && x.dataset.value === p.get(k)); return b ? b.dataset.say || b.dataset.label || b.textContent.trim() : p.get(k); }));
+      m.said.forEach(s => { s.textContent = used.length ? n + " of " + m.items.length + " " + m.noun + ": " + used.join(", ") : "All " + m.items.length + " " + m.noun; });
+    } };
+  const go = (p, push) => { p.delete("at"); const h = p.toString(); history[push ? "pushState" : "replaceState"](null, "", h ? "#" + h : location.pathname + location.search); render(); };
+  // A deep link to an item the filter hides clears that view's filter and shows it.
+  const reveal = () => { const h = location.hash.slice(1), id = h.includes("=") ? read().get("at") : decodeURIComponent(h), el = id && document.getElementById(id);
+    if (!el) return;
+    if (el.closest("[hidden]")) { const m = model.find(x => x.v === viewOf(el)) || model[0], p = read(); [m.qk, ...m.keys].forEach(k => p.delete(k));
+      p.set("at", id); history.replaceState(null, "", "#" + p); render(); }
+    document.querySelectorAll("[data-at]").forEach(x => x.removeAttribute("data-at")); el.setAttribute("data-at", "");
+    if (h.includes("=")) el.scrollIntoView({ block: "start" }); };
+  if (model.length) {
+    let typed = 0;
+    model.forEach(m => {
+      if (m.q) m.q.addEventListener("input", () => { const p = read(), v = m.q.value.trim(); if (v) p.set(m.qk, v); else p.delete(m.qk);
+        go(p, Date.now() - typed > 1000); typed = Date.now(); }); // one history entry per pause in typing, not per key
+      m.picks.forEach(b => { const pick = () => { const p = read(), on = (p.get(b.dataset.key) || "") === b.dataset.value;
+          if (b.dataset.value && !(on && b.closest("svg"))) p.set(b.dataset.key, b.dataset.value); else p.delete(b.dataset.key); go(p, true); };
+        b.addEventListener("click", pick);
+        if (b.closest("svg")) b.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } }); });
+      m.tables.forEach(t => t.querySelectorAll("th > button.sort").forEach(btn => btn.addEventListener("click", () => {
+        const th = btn.parentElement, p = read(), k = t.dataset.sortKey || "sort";
+        p.set(k, th.dataset.col + (th.getAttribute("aria-sort") === "ascending" ? ".desc" : ".asc")); go(p, true); })));
+    });
+    // In-page links keep the state: #at=finding-3&sev=high.
+    document.addEventListener("click", e => { const a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (!a || !location.hash.includes("=")) return;
+      const id = decodeURIComponent(a.getAttribute("href").slice(1)); if (!id || id.includes("=") || !document.getElementById(id)) return;
+      e.preventDefault(); const p = read(); p.set("at", id); history.pushState(null, "", "#" + p); render(); reveal(); }, true);
+    addEventListener("popstate", () => { render(); reveal(); }); addEventListener("hashchange", () => { render(); reveal(); });
+    render(); reveal();
+  }
+
+  // Step progress: ticks are kept in localStorage for this page, with the time
+  // the run started, until the reader resets them. A tick never hides a step.
+  const ticks = [...document.querySelectorAll("ol.steps.do > li > .step-check input")];
+  if (ticks.length) {
+    const key = K + "run", say = document.querySelector(".progress-text"), jump = document.querySelector(".progress-jump");
+    let run = {}; try { run = JSON.parse(localStorage.getItem(key)) || {}; } catch {}
+    const save = () => { try { run.started ? localStorage.setItem(key, JSON.stringify(run)) : localStorage.removeItem(key); } catch {} };
+    const update = () => { const next = ticks.find(t => !t.checked), n = ticks.filter(t => t.checked).length;
+      if (say) say.textContent = (next ? "Next: step " + (ticks.indexOf(next) + 1) + " of " + ticks.length : "All " + ticks.length + " steps ticked")
+        + (run.started ? ". " + n + " done in the run started " + new Date(run.started).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) + "." : ".");
+      if (jump) { jump.hidden = !next; if (next) jump.href = "#" + next.closest("li").id; } };
+    ticks.forEach(t => { t.checked = (run.done || []).includes(t.closest("li").id);
+      t.addEventListener("change", () => { if (!run.started) run.started = Date.now(); run.done = ticks.filter(x => x.checked).map(x => x.closest("li").id); save(); update(); }); });
+    const reset = document.querySelector("[data-reset-steps]");
+    if (reset) reset.addEventListener("click", () => { run = {}; save(); ticks.forEach(t => { t.checked = false; }); update(); });
+    update();
+  }
+
+  // Returning reader (Monitor): a digest of what the reader last saw is kept for
+  // this page. On return, a dismissible panel lists what changed. Silent when
+  // storage is unavailable.
+  const since = document.querySelector(".since");
+  if (since) {
+    const key = K + "seen", now = {};
+    document.querySelectorAll("[data-digest]").forEach(el => { const s = el.querySelector(".status"); now[el.dataset.digest] = s ? s.textContent.trim() : el.dataset.status || ""; });
+    let was = null; try { was = JSON.parse(localStorage.getItem(key)); } catch {}
+    const save = () => { try { localStorage.setItem(key, JSON.stringify(now)); } catch {} };
+    const ids = was ? [...new Set([...Object.keys(now), ...Object.keys(was)])].filter(id => was[id] !== now[id]) : [];
+    if (ids.length) {
+      since.querySelector(".since-count").textContent = "Changed since your last visit: " + ids.length + (ids.length === 1 ? " item" : " items");
+      const list = since.querySelector("ul");
+      ids.slice(0, 8).forEach(id => { const li = document.createElement("li"); li.textContent = id + ": " + (!(id in was) ? "new, " + now[id] : !(id in now) ? "removed" : "was " + was[id] + ", now " + now[id]); list.append(li); });
+      if (ids.length > 8) { const li = document.createElement("li"); li.textContent = "and " + (ids.length - 8) + " more"; list.append(li); }
+      since.hidden = false;
+    }
+    const dismiss = since.querySelector("[data-dismiss]");
+    if (dismiss) dismiss.addEventListener("click", () => { since.hidden = true; save(); });
+    addEventListener("pagehide", save);
+  }
+
+  // Save as PDF: the browser's own print. A button with data-progress keeps the
+  // ticks on paper; any other print shows empty boxes.
+  document.querySelectorAll(".print-btn").forEach(b => b.addEventListener("click", () => { root.classList.toggle("print-progress", "progress" in b.dataset); window.print(); }));
+  addEventListener("afterprint", () => root.classList.remove("print-progress"));
+
+  // Print everything: open collapsed sections first.
+  addEventListener("beforeprint", () => document.querySelectorAll("details").forEach(d => { d.dataset.wasOpen = d.open; d.open = true; }));
+  addEventListener("afterprint", () => document.querySelectorAll("details").forEach(d => { d.open = d.dataset.wasOpen === "true"; }));
+})();
+</script>
+</body>
+</html>
