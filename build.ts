@@ -63,7 +63,7 @@ const ABBR: Record<string, string> = {
   SCAM: "Source Code Analysis and Manipulation conference", MITRE: "the MITRE Corporation", RAG: "retrieval-augmented generation", NDSS: "Network and Distributed System Security Symposium",
   MACE: "a privilege-escalation detection tool", PROMISE: "Predictive Models and Data Analytics in Software Engineering conference", TAG: "Technical Advisory Group",
   ICST: "International Conference on Software Testing", USENIX: "the USENIX Association", OOPSLA: "Object-Oriented Programming, Systems, Languages and Applications conference",
-  MSP: "IEEE Security and Privacy magazine", PW: "Privacy Workshops", AppSec: "application security", AOL: "America Online", HR: "human resources", BI: "Business Insider", OT: "a project code name",
+  MSP: "IEEE Security and Privacy magazine", GPT: "generative pre-trained transformer", EOL: "end of life", PW: "Privacy Workshops", AppSec: "application security", AOL: "America Online", HR: "human resources", BI: "Business Insider", OT: "a project code name",
   NBC: "National Broadcasting Company", FAANG: "Facebook, Apple, Amazon, Netflix and Google", SVPG: "Silicon Valley Product Group", GM: "general manager",
   METR: "Model Evaluation and Threat Research", WP: "working paper", ADP: "Automatic Data Processing, a payroll company", DEL: "Digital Economy Lab",
   SSRN: "Social Science Research Network", SF: "San Francisco", TLM: "tech lead manager", TLMs: "tech lead managers", OSS: "open-source software", SSDF: "Secure Software Development Framework", SBOM: "software bill of materials",
